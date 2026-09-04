@@ -61,12 +61,15 @@ class BrowserSession:
         if self._playwright is not None:
             self._playwright.stop()
 
-    def open_page(self, viewport: Viewport):
+    def open_page(self, viewport: Viewport, color_scheme: str | None = None):
         assert self._browser is not None
-        context = self._browser.new_context(
-            viewport={"width": viewport.width, "height": viewport.height},
-            device_scale_factor=1,
-        )
+        kwargs = {
+            "viewport": {"width": viewport.width, "height": viewport.height},
+            "device_scale_factor": 1,
+        }
+        if color_scheme in {"light", "dark"}:
+            kwargs["color_scheme"] = color_scheme
+        context = self._browser.new_context(**kwargs)
         page = context.new_page()
         capture = Capture()
 

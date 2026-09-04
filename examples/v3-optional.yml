@@ -1,0 +1,44 @@
+# Example only — optional V3 fields.
+
+task:
+  name: login-page
+url: http://localhost:3000
+routes:
+  - /login
+viewports:
+  - name: desktop
+    width: 1440
+    height: 900
+  - name: tablet
+    width: 768
+    height: 1024
+  - name: mobile
+    width: 390
+    height: 844
+color_schemes:
+  - light
+  - dark
+reference:
+  image: docs/stills/mobile-after.png
+  viewport: mobile
+  route: /login
+journeys:
+  - name: continue
+    route: /login
+    viewport: desktop
+    steps:
+      - action: click
+        selector: "[data-testid='primary-cta']"
+      - action: visible
+        selector: "[data-testid='dashboard']"
+requirements:
+  - type: element-visible
+    selector: "[data-testid='primary-cta']"
+  - type: a11y-names
+  - type: http-status
+    path: /login
+    expect: 200
+  - type: command
+    command: [python, -m, pytest, -q]
+  - type: file-exists
+    path: README.md

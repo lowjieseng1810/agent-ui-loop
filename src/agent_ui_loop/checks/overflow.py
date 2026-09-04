@@ -27,6 +27,10 @@ TOLERANCE_PX = 1
 
 class OverflowCheck:
     type = "no-horizontal-overflow"
+    description = "Compare document scrollWidth to the viewport width."
+    domain = "ui"
+    scope = "page"
+    why = "The layout must fit the claimed viewport."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         measured = ctx.page.evaluate(OVERFLOW_JS)

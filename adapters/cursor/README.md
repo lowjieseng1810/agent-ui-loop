@@ -2,6 +2,17 @@
 
 Agent UI Loop is agent-agnostic. Cursor does not need a proprietary runner.
 
+## Native / adapter / CLI-compatible
+
+| Agent | Status |
+| --- | --- |
+| Claude Code | **Native** skill at `.claude/skills/agent-ui-loop/SKILL.md` |
+| Cursor | **Adapter** — run the CLI; see this file |
+| Codex | **CLI-compatible** — see `adapters/codex` |
+| OpenCode | **CLI-compatible** — see `adapters/opencode` |
+
+Core verification is never vendor-specific. Adapters only document how to invoke the CLI.
+
 ## Use
 
 1. `pip install . && python -m playwright install chromium`

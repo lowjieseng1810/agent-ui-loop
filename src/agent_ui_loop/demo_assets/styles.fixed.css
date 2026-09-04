@@ -88,8 +88,13 @@ input {
   letter-spacing: 0;
 }
 
-.mark {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f3f4f6;
+    --muted: #9ca3af;
+    --line: #374151;
+    --bg: #111827;
+  }
+  body { background: var(--bg); color: var(--ink); }
+  input { background: #1f2937; color: var(--ink); border-color: var(--line); }
 }

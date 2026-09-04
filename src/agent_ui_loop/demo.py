@@ -15,6 +15,7 @@ ASSETS = Path(__file__).parent / "demo_assets"
 def demo_config(url: str) -> Config:
     return parse_config(
         {
+            "task": {"name": "login-page"},
             "url": url,
             "routes": ["/login"],
             "viewports": [
@@ -23,10 +24,21 @@ def demo_config(url: str) -> Config:
             ],
             "requirements": [
                 {"type": "element-visible", "selector": "[data-testid='primary-cta']"},
+                {"type": "element-visible", "selector": "[data-testid='login-form']"},
                 {"type": "no-horizontal-overflow"},
                 {"type": "no-console-errors"},
-                {"type": "no-network-failures"},
-                {"type": "no-broken-images"},
+                {"type": "route-available"},
+            ],
+            "journeys": [
+                {
+                    "name": "continue-to-dashboard",
+                    "route": "/login",
+                    "viewport": "desktop",
+                    "steps": [
+                        {"action": "click", "selector": "[data-testid='primary-cta']"},
+                        {"action": "visible", "selector": "[data-testid='dashboard']"},
+                    ],
+                }
             ],
             "timeout_ms": 15000,
         }
@@ -37,6 +49,7 @@ def write_demo_app(dest: Path, *, broken: bool) -> Path:
     dest.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ASSETS / "index.html", dest / "index.html")
     shutil.copyfile(ASSETS / "login.html", dest / "login.html")
+    shutil.copyfile(ASSETS / "dashboard.html", dest / "dashboard.html")
     shutil.copyfile(ASSETS / "mark.svg", dest / "mark.svg")
     css = ASSETS / ("styles.broken.css" if broken else "styles.fixed.css")
     shutil.copyfile(css, dest / "styles.css")
@@ -66,6 +79,8 @@ class QuietHandler(SimpleHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path in {"/", "/login", "/login/"}:
             self.path = "/login.html"
+        elif path in {"/dashboard", "/dashboard/"}:
+            self.path = "/dashboard.html"
         super().do_GET()
 
 

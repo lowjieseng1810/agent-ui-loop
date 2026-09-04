@@ -6,7 +6,9 @@ Thanks for helping agents prove that a UI actually works.
 
 Acceptance-driven UI verification with evidence:
 
-REQUIRE → RUN → VERIFY → EVIDENCE → FIX → PROVE
+REQUIRE → EXECUTE → VERIFY → EVIDENCE → FIX → RE-VERIFY → PROVE
+
+See `checks/README.md` and `docs/acceptance-contract.md`.
 
 It is not a SaaS, dashboard, visual-regression cloud, or aesthetic redesign tool.
 

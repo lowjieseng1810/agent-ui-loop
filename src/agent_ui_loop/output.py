@@ -30,11 +30,19 @@ def print_run(report: dict[str, Any], *, color: bool = True, json_mode: bool = F
         return
     meta = report.get("meta") or {}
     print()
-    print(_c(color, BOLD, "Agent UI Loop") + "  ·  verify  ·  evidence  ·  prove")
+    task = meta.get("taskName") or "ui-acceptance"
+    reqs = [r for r in (report.get("results") or [])]
+    unique = {}
+    for item in reqs:
+        unique.setdefault(item.get("check"), []).append(item)
+    print(_c(color, BOLD, "Agent UI Loop") + "  ·  require  ·  verify  ·  prove")
+    print(f"{_c(color, DIM, 'task')}    {task}")
     print(f"{_c(color, DIM, 'url')}     {meta.get('url')}")
     print(f"{_c(color, DIM, 'run')}     {meta.get('runId')}")
     if meta.get("commit"):
         print(f"{_c(color, DIM, 'commit')}  {meta.get('commitShort') or meta.get('commit')}")
+    print()
+    print(f"VERIFYING {len(unique)} REQUIREMENT TYPE(S)  ·  adversarial invalidate-claim")
     print()
 
     grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
@@ -98,9 +106,12 @@ def agent_summary(report: dict[str, Any]) -> dict[str, Any]:
     failures = [r for r in results if r.get("status") != "passed"]
     return {
         "status": report.get("status"),
+        "taskName": (report.get("meta") or {}).get("taskName"),
+        "schemaVersion": (report.get("meta") or {}).get("schemaVersion", 3),
         "runId": (report.get("meta") or {}).get("runId"),
         "runDir": (report.get("meta") or {}).get("runDir"),
         "commit": (report.get("meta") or {}).get("commit"),
+        "adversarial": (report.get("meta") or {}).get("adversarial"),
         "failed": len(failures),
         "passed": sum(1 for r in results if r.get("status") == "passed"),
         "failures": [
@@ -123,6 +134,10 @@ def agent_summary(report: dict[str, Any]) -> dict[str, Any]:
                         "brokenCount",
                         "playwrightVisible",
                         "intersectsViewport",
+                        "exitCode",
+                        "meanDelta",
+                        "exists",
+                        "status",
                     }
                 },
                 "screenshot": r.get("screenshot"),

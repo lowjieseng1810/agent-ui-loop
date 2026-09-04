@@ -47,6 +47,10 @@ def _measure(ctx: CheckContext, selector: str) -> dict:
 
 class ElementExistsCheck:
     type = "element-exists"
+    description = "Require document.querySelector to find the element."
+    domain = "ui"
+    scope = "page"
+    why = "The acceptance contract named an element that must exist."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         selector = requirement.selector or ""
@@ -70,6 +74,10 @@ class ElementExistsCheck:
 
 class ElementVisibleCheck:
     type = "element-visible"
+    description = "Require the element to exist and be visible."
+    domain = "ui"
+    scope = "page"
+    why = "The required element must be visible to a user."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         selector = requirement.selector or ""

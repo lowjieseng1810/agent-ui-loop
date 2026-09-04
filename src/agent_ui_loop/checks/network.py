@@ -13,6 +13,10 @@ def _ignored(url: str) -> bool:
 
 class NetworkFailuresCheck:
     type = "no-network-failures"
+    description = "Fail on HTTP 4xx/5xx and failed requests."
+    domain = "runtime"
+    scope = "page"
+    why = "Required assets should load without network failures."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         failures = []

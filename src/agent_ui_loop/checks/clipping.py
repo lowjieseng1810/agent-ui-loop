@@ -40,6 +40,10 @@ CLIP_JS = """
 
 class ElementInViewportCheck:
     type = "element-in-viewport"
+    description = "Require getBoundingClientRect to intersect the viewport."
+    domain = "ui"
+    scope = "page"
+    why = "A required element must not sit fully outside the viewport."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         selector = requirement.selector or ""
@@ -73,6 +77,10 @@ class NoClippingCheck:
     """Fails when a [data-testid] element has no intersection with the viewport."""
 
     type = "no-clipping"
+    description = "Flag [data-testid] nodes with no viewport intersection."
+    domain = "ui"
+    scope = "page"
+    why = "Required testids should not be clipped out of view."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         if requirement.selector:

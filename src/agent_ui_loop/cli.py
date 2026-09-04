@@ -37,9 +37,9 @@ def _fail(exc: UserError) -> None:
 @click.group()
 @click.version_option(__version__, prog_name="agent-ui-loop")
 def main() -> None:
-    """Agent UI Loop — your agent can code. Now make it prove the UI.
+    """Agent UI Loop — agents should not say done without proof.
 
-    REQUIRE → RUN → VERIFY → EVIDENCE → FIX → PROVE
+    REQUIRE → EXECUTE → VERIFY → EVIDENCE → FIX → RE-VERIFY → PROVE
     """
 
 
@@ -171,8 +171,9 @@ def demo(keep: bool, json_mode: bool, no_fix: bool) -> None:
         config = demo_config(url)
         if not json_mode:
             click.echo()
-            click.echo("KILLER DEMO  ·  Agent UI Loop")
+            click.echo("KILLER DEMO  ·  Agent UI Loop V3")
             click.echo("Agent says: “Login page is complete.”")
+            click.echo("Verifier: invalidate that claim against the acceptance contract.")
             click.echo(f"Opening real Chromium against {url}/login …")
             click.echo()
         try:

@@ -6,6 +6,10 @@ from agent_ui_loop.config import Requirement
 
 class ConsoleErrorsCheck:
     type = "no-console-errors"
+    description = "Fail on console.error / pageerror."
+    domain = "runtime"
+    scope = "page"
+    why = "A completed UI should not throw in the browser console."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         errors = [

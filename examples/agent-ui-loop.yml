@@ -1,3 +1,6 @@
+task:
+  name: login-page
+
 url: http://localhost:3000
 
 routes:
@@ -17,4 +20,4 @@ requirements:
   - type: no-horizontal-overflow
   - type: no-console-errors
   - type: no-network-failures
-  - type: no-broken-images
+  - type: route-available

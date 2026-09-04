@@ -1,5 +1,5 @@
 name: "Agent UI Loop"
-description: "Acceptance-driven UI verification with evidence. Opens real Chromium, runs deterministic checks, and publishes a proof artifact."
+description: "Agent task-completion verification with UI evidence. Runs Chromium checks, writes a proof artifact, optionally comments on a PR."
 author: "Agent UI Loop"
 
 branding:
@@ -8,7 +8,7 @@ branding:
 
 inputs:
   url:
-    description: "Base URL of the running UI (overrides config url)"
+    description: "Base URL of the running UI (overrides config url). You must start the app yourself."
     required: false
     default: ""
   config:
@@ -19,6 +19,14 @@ inputs:
     description: "Directory that contains the config and will receive .agent-ui-loop/"
     required: false
     default: "."
+  comment:
+    description: "If true, append github.md to the GitHub step summary. Does not post to PRs unless github-token is set and gh is available."
+    required: false
+    default: "false"
+  github-token:
+    description: "Optional token used only when comment=true to post github.md as a PR comment via gh. Never uploads screenshots to third parties."
+    required: false
+    default: ""
 
 outputs:
   result:
@@ -27,6 +35,9 @@ outputs:
   run-dir:
     description: "Path to the evidence directory"
     value: ${{ steps.verify.outputs.run-dir }}
+  verified:
+    description: "true when the proof is VERIFIED"
+    value: ${{ steps.verify.outputs.verified }}
 
 runs:
   using: "composite"
@@ -43,7 +54,7 @@ runs:
         pip install "${{ github.action_path }}"
         python -m playwright install chromium --with-deps
 
-    - name: Verify UI
+    - name: Verify
       id: verify
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -59,7 +70,45 @@ runs:
         RUN_DIR=$(python -c "import json; print(json.load(open('/tmp/agent-ui-loop-summary.json')).get('runDir',''))" 2>/dev/null || true)
         echo "result=${RESULT}" >> "$GITHUB_OUTPUT"
         echo "run-dir=${RUN_DIR}" >> "$GITHUB_OUTPUT"
+        if [ "$RESULT" = "passed" ]; then echo "verified=true" >> "$GITHUB_OUTPUT"; else echo "verified=false" >> "$GITHUB_OUTPUT"; fi
+        if [ -n "$RUN_DIR" ] && [ -f "$RUN_DIR/github.md" ]; then
+          echo "github.md exists"
+        fi
         exit $STATUS
+
+    - name: Job summary
+      if: always()
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        RUN_DIR="${{ steps.verify.outputs.run-dir }}"
+        if [ -n "$RUN_DIR" ] && [ -f "$RUN_DIR/github.md" ]; then
+          cat "$RUN_DIR/github.md" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "No github.md proof (the app URL may have been unreachable)." >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Optional PR comment
+      if: ${{ always() && inputs.comment == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        RUN_DIR="${{ steps.verify.outputs.run-dir }}"
+        if [ -z "$GH_TOKEN" ]; then
+          echo "comment=true but no github-token; wrote step summary only."
+          exit 0
+        fi
+        if [ -z "$RUN_DIR" ] || [ ! -f "$RUN_DIR/github.md" ]; then
+          echo "No github.md to comment."
+          exit 0
+        fi
+        if ! command -v gh >/dev/null; then
+          echo "gh CLI not available; skip PR comment."
+          exit 0
+        fi
+        gh pr comment --body-file "$RUN_DIR/github.md" || echo "gh pr comment failed (no PR context?). Proof remains in artifacts."
 
     - name: Upload proof artifact
       if: always()

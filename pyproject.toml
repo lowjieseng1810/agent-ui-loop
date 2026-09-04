@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-ui-loop"
-version = "0.1.0"
+version = "0.3.0"
 description = "Acceptance-driven UI verification with evidence for AI coding agents."
 readme = "README.md"
 license = "MIT"

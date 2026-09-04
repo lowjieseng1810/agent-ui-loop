@@ -1,26 +1,24 @@
-# Adding a check
+# Adding a check (few minutes)
 
-Checks are Python classes registered in `src/agent_ui_loop/checks/`.
+1. Copy `checks/TEMPLATE.md`.
+2. Add `src/agent_ui_loop/checks/your_check.py` with:
 
-Keep them:
+```python
+class YourCheck:
+    type = "your-check"
+    description = "One sentence."
+    domain = "ui"       # ui | runtime | http | test | code
+    scope = "page"      # page (browser) | run (once)
+    why = "Why this belongs in an acceptance contract."
 
-- deterministic (DOM / network / console measurements)
-- local (no upload)
-- small (one concern)
+    def run(self, requirement, ctx):
+        ...
+        return result(requirement, ctx, "passed"|"failed", evidence, message, why=self.why)
+```
 
-A check receives a `CheckContext` (Playwright `page`, viewport, captured console/network, screenshot path) and returns a `CheckResult` with `status`, `evidence`, and `message`.
+3. Register it in `src/agent_ui_loop/checks/__init__.py` `REGISTRY`.
+4. Add the type to `KNOWN_REQUIREMENT_TYPES` in `config.py`.
+5. Add a fixture HTML page + a test in `tests/`.
+6. Mention it in `docs/acceptance-contract.md`.
 
-Do not replace measurements with LLM guesses.
-
-## Supported types (MVP)
-
-- `no-console-errors`
-- `no-network-failures`
-- `element-exists`
-- `element-visible`
-- `no-horizontal-overflow`
-- `no-broken-images`
-- `element-in-viewport`
-- `no-clipping`
-
-Framework-specific checks belong in a follow-up PR with tests and an example config under `examples/`.
+Keep checks deterministic. Do not call an LLM. Do not upload data.

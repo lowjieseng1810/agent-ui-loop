@@ -21,6 +21,10 @@ IMAGES_JS = """
 
 class BrokenImagesCheck:
     type = "no-broken-images"
+    description = "Fail when img.complete && naturalWidth === 0."
+    domain = "ui"
+    scope = "page"
+    why = "Broken images are a deterministic completion failure."
 
     def run(self, requirement: Requirement, ctx: CheckContext) -> CheckResult:
         images = ctx.page.evaluate(IMAGES_JS)

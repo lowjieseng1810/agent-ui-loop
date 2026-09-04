@@ -22,6 +22,7 @@ def render_report_md(report: dict[str, Any]) -> str:
     lines = [
         "# Agent UI Loop report",
         "",
+        f"**Task:** {meta.get('taskName') or 'ui-acceptance'}",
         f"**Result:** {status}",
         f"**Run:** `{meta.get('runId', '')}`",
         f"**URL:** {meta.get('url', '')}",

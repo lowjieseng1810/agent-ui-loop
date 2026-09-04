@@ -242,7 +242,8 @@ agent-ui-loop demo
 python scripts/record_gif.py   # regenerates docs/demo.gif from a live run
 ```
 
-GIF recording notes: [`docs/RECORDING.md`](docs/RECORDING.md).
+See `docs/acceptance-contract.md`, `docs/proof-format.md`, and `docs/SECURITY.md` for the V3 contract, proof schema, and network behavior.
+
 
 ---
 

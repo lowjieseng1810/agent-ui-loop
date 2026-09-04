@@ -1,0 +1,33 @@
+AGENT COMPLETION PROOF
+────────────────────────────
+Task:                  login-page
+Requirements:          6
+Passed:                6
+Failed:                0
+
+Route                 /login        ✓
+Desktop               1440×900      ✓
+Mobile                390×844       ✓
+Primary element visible `[data-testid='primary-cta']`              ✓
+Primary element visible `[data-testid='login-form']`              ✓
+No horizontal overflow              ✓
+No console errors                   ✓
+Journey                             ✓
+Route available                     ✓
+
+Evidence:
+  screenshots/desktop--login.png
+  screenshots/mobile--login.png
+  logs/console.log
+  logs/network.log
+  /tmp/aul-v3/.agent-ui-loop/runs/20260904T025422Z-0a08e179/report.json
+
+Before / after:
+  no-horizontal-overflow @ /login mobile: failed → passed
+
+Commit:
+  unavailable
+
+Proof means auditable evidence, not cryptography.
+
+RESULT: VERIFIED ✓

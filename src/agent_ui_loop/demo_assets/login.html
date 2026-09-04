@@ -12,7 +12,7 @@
         <p class="eyebrow">Northwind · workspace</p>
         <h1>Sign in</h1>
         <p class="lede">Use your work email to continue to the dashboard.</p>
-        <form class="form" action="#" method="post" onsubmit="return false">
+        <form class="form" action="#" method="post" onsubmit="return false" data-testid="login-form">
           <label>
             Email
             <input type="email" name="email" autocomplete="username" value="ada@northwind.dev" />
@@ -24,7 +24,7 @@
         </form>
       </section>
       <div class="cta-row">
-        <button type="button" class="cta" data-testid="primary-cta">Continue to your Northwind workspace dashboard →</button>
+        <button type="button" class="cta" data-testid="primary-cta" onclick="location.href='/dashboard'">Continue to your Northwind workspace dashboard →</button>
       </div>
     </main>
     <img class="mark" src="/mark.svg" alt="" width="32" height="32" />

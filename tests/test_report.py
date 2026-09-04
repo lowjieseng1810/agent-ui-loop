@@ -6,6 +6,7 @@ def _report(status="failed"):
     return {
         "status": status,
         "meta": {
+            "taskName": "login-page",
             "runId": "1",
             "runDir": "/tmp/run",
             "url": "http://127.0.0.1:9",
@@ -46,6 +47,7 @@ def test_proof_not_verified_on_failure():
     assert proof["verified"] is False
     text = render_proof_text(proof, color=False)
     assert "NOT VERIFIED" in text
+    assert "AGENT COMPLETION PROOF" in text
 
 
 def test_proof_verified_on_pass():
