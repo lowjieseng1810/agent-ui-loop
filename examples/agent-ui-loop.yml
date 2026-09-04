@@ -1,0 +1,20 @@
+url: http://localhost:3000
+
+routes:
+  - /login
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 900
+  - name: mobile
+    width: 390
+    height: 844
+
+requirements:
+  - type: element-visible
+    selector: "[data-testid='primary-cta']"
+  - type: no-horizontal-overflow
+  - type: no-console-errors
+  - type: no-network-failures
+  - type: no-broken-images

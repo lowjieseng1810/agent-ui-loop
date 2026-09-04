@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-ui-loop"
+version = "0.1.0"
+description = "Acceptance-driven UI verification with evidence for AI coding agents."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Agent UI Loop" }]
+keywords = [
+  "ai-agents",
+  "ui-verification",
+  "acceptance-testing",
+  "playwright",
+  "evidence",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = [
+  "click>=8.1",
+  "playwright>=1.40",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pillow>=10.0",
+]
+gif = [
+  "pillow>=10.0",
+]
+
+[project.scripts]
+agent-ui-loop = "agent_ui_loop.cli:main"
+
+[project.urls]
+Homepage = "https://github.com"
+Documentation = "https://github.com"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_ui_loop"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

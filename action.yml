@@ -1,0 +1,70 @@
+name: "Agent UI Loop"
+description: "Acceptance-driven UI verification with evidence. Opens real Chromium, runs deterministic checks, and publishes a proof artifact."
+author: "Agent UI Loop"
+
+branding:
+  icon: check-square
+  color: blue
+
+inputs:
+  url:
+    description: "Base URL of the running UI (overrides config url)"
+    required: false
+    default: ""
+  config:
+    description: "Path to the acceptance contract YAML"
+    required: false
+    default: "agent-ui-loop.yml"
+  working-directory:
+    description: "Directory that contains the config and will receive .agent-ui-loop/"
+    required: false
+    default: "."
+
+outputs:
+  result:
+    description: "passed or failed"
+    value: ${{ steps.verify.outputs.result }}
+  run-dir:
+    description: "Path to the evidence directory"
+    value: ${{ steps.verify.outputs.run-dir }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Agent UI Loop + Chromium
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        pip install "${{ github.action_path }}"
+        python -m playwright install chromium --with-deps
+
+    - name: Verify UI
+      id: verify
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set +e
+        URL_ARGS=()
+        if [ -n "${{ inputs.url }}" ]; then
+          URL_ARGS=(--url "${{ inputs.url }}")
+        fi
+        agent-ui-loop run --config "${{ inputs.config }}" "${URL_ARGS[@]}" --json | tee /tmp/agent-ui-loop-summary.json
+        STATUS=$?
+        RESULT=$(python -c "import json; print(json.load(open('/tmp/agent-ui-loop-summary.json')).get('status','failed'))" 2>/dev/null || echo failed)
+        RUN_DIR=$(python -c "import json; print(json.load(open('/tmp/agent-ui-loop-summary.json')).get('runDir',''))" 2>/dev/null || true)
+        echo "result=${RESULT}" >> "$GITHUB_OUTPUT"
+        echo "run-dir=${RUN_DIR}" >> "$GITHUB_OUTPUT"
+        exit $STATUS
+
+    - name: Upload proof artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: agent-ui-proof
+        path: ${{ inputs.working-directory }}/.agent-ui-loop/runs/
+        if-no-files-found: warn

@@ -1,0 +1,40 @@
+# Agent UI Loop — GitHub Action
+#
+# This workflow verifies a running web UI with Playwright Chromium.
+# It does not start your app for you: start the app in an earlier step,
+# then point Agent UI Loop at the URL.
+#
+# Playwright on GitHub-hosted runners needs:
+#   python -m playwright install chromium --with-deps
+
+name: Agent UI Loop
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Agent UI Loop
+        run: |
+          pip install .
+          python -m playwright install chromium --with-deps
+      - name: Run verification
+        # Replace with your real preview URL, or start the app in a previous step.
+        run: |
+          echo "Start your UI, then run:"
+          echo "  agent-ui-loop run --url http://127.0.0.1:PORT"
+        continue-on-error: true
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-ui-loop-evidence
+          path: .agent-ui-loop/runs/
+          if-no-files-found: ignore
