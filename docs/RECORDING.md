@@ -1,34 +1,20 @@
-# Recording the README GIF
+# Recording README visuals
 
-The GIF in `docs/demo.gif` is built from **real** Playwright screenshots of the
-demo login page (broken mobile overflow, then the CSS fix).
-
-## Generate
+Canonical command:
 
 ```bash
 pip install -e ".[dev]"
 python -m playwright install chromium
-python scripts/record_gif.py
+python scripts/build_release_assets.py
 ```
 
-This:
+That runs a **real** verification (broken then fixed sample app), then writes:
 
-1. Serves the demo app with the intentional `min-width: 520px` CTA row
-2. Runs Agent UI Loop (desktop + mobile)
-3. Applies the fix
-4. Re-runs
-5. Composites captions + screenshots into `docs/demo.gif`
+- `assets/hero/agent-ui-loop-demo.gif` (also copied to `docs/demo.gif`)
+- annotated failure / before-after / proof / terminal images
+- diagrams and social preview
+- `assets/screenshots/demo-run.txt` from `python -m agent_ui_loop demo`
 
-Sequence (about 16s):
+`scripts/record_gif.py` is a leftover helper. Prefer `build_release_assets.py`.
 
-| Time | Frame |
-| --- | --- |
-| 0–2s | Agent claims the login page is complete |
-| 2–4s | Desktop capture |
-| 4–6s | Mobile failure |
-| 6–8s | Evidence: scrollWidth vs viewportWidth |
-| 8–11s | CSS fix |
-| 11–14s | Re-check |
-| 14–16s | VERIFIED |
-
-Nothing in the GIF is a mock UI or a fabricated measurement.
+Nothing in the GIF is a mock UI or a fabricated measurement. The demo’s CSS fix applies only to the sample app.

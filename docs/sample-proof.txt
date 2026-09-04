@@ -20,13 +20,13 @@ Evidence:
   screenshots/mobile--login.png
   logs/console.log
   logs/network.log
-  /tmp/aul-v3/.agent-ui-loop/runs/20260904T025422Z-0a08e179/report.json
+  /workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T034351Z-a4f2ca43/report.json
 
 Before / after:
   no-horizontal-overflow @ /login mobile: failed → passed
 
 Commit:
-  unavailable
+  4071f1e
 
 Proof means auditable evidence, not cryptography.
 

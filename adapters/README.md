@@ -1,10 +1,10 @@
 # Adapters
 
-| Agent | Status |
-| --- | --- |
-| Claude Code | **Native** — `.claude/skills/agent-ui-loop/SKILL.md` |
-| Cursor | **Adapter** — CLI workflow |
-| Codex | **CLI-compatible** |
-| OpenCode | **CLI-compatible** |
+| Agent | Status | Path |
+| --- | --- | --- |
+| Claude Code | **Native skill** | `.claude/skills/agent-ui-loop/SKILL.md` |
+| Cursor | **Adapter** (CLI workflow) | [`cursor/`](cursor/) |
+| Codex | **CLI-compatible** | [`codex/`](codex/) |
+| OpenCode | **CLI-compatible** | [`opencode/`](opencode/) |
 
-Do not overclaim. The product is the CLI protocol, not vendor plugins.
+Do not call Codex or OpenCode “native.” They invoke the same CLI. Core verification is never vendor-specific.

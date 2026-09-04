@@ -1,19 +1,21 @@
 # Agent UI Loop
 
-## Your agent can code. Now make it prove the UI.
+**Your agent can code. Now make it prove the UI.**
 
-![Agent UI Loop demo: mobile CTA overflow detected, fixed, then verified](docs/demo.gif)
+![Agent UI Loop demo: agent claims done, mobile overflow fails, evidence is captured, sample CSS is fixed, verification reruns, VERIFIED](assets/hero/agent-ui-loop-demo.gif)
 
-**Before (mobile 390×844):** the Continue CTA is clipped off the viewport.  
-![Mobile before: CTA overflow](docs/stills/mobile-before.png)
+AI coding agents are very good at saying “done.”
+Agent UI Loop makes that claim testable.
 
-**After:** the same acceptance checks pass.  
-![Mobile after: CTA fits](docs/stills/mobile-after.png)
+It runs your real app in a browser, checks explicit acceptance criteria,
+captures evidence, and produces proof of completion.
 
-Agent UI Loop gives AI coding agents a real-browser verification loop for frontend interfaces: **verify requirements, collect evidence, fix failures, and prove the result.**
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-1f2937)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1f2937)](LICENSE)
 
-An agent should not merely say “Done.”
-It should be able to prove: **“Done — and here is the evidence.”**
+## Quickstart
+
+Not on PyPI yet. Install from this repository:
 
 ```bash
 pip install .
@@ -21,65 +23,136 @@ python -m playwright install chromium
 agent-ui-loop demo
 ```
 
-The distribution name is `agent-ui-loop`. From this repository, `pip install .` is the command that works today.
-
-No sample app to prepare. The demo ships a login page with a **real** mobile CTA overflow, catches it with Playwright, applies the CSS fix, re-checks, and prints `VERIFIED`.
+That is the whole first run. The demo ships a login page, **fails a real mobile overflow**, writes evidence, applies a CSS fix **to the sample app only**, reverifies, and prints **VERIFIED**.
 
 ```
-REQUIRE  →  RUN  →  VERIFY  →  EVIDENCE  →  FIX  →  PROVE
+Agent:  "Done."
+Loop:   Prove it.
 ```
 
-Built for developers using **Claude Code**, Cursor, Codex, and OpenCode on React / Next.js / plain HTML. Claude Code is first-class (`.claude/skills/agent-ui-loop`); the core is agent-agnostic.
+```
+/login  mobile 390×844
+  ✗  no-horizontal-overflow
+      horizontal overflow: scrollWidth=593 viewportWidth=390
+RESULT: FAILED  (1 check)
+```
 
----
+```
+RESULT: VERIFIED ✓
+```
 
-## Why this exists
+![Actual `agent-ui-loop demo` transcript: fail, evidence, CSS fix of the sample app, VERIFIED](assets/screenshots/terminal-verified.png)
 
-AI coding agents generate frontends quickly. Code completion does **not** guarantee that the rendered UI:
+<p align="center"><sub>Command + result from a real demo run. Full transcript: <a href="assets/screenshots/demo-run.txt">assets/screenshots/demo-run.txt</a></sub></p>
 
-- fits the viewport
-- works on mobile
-- contains the required elements
-- has no console failures
-- has no obvious layout failures
-- satisfies explicit UI acceptance requirements
-
-Today a human still has to open the browser and nag the agent. Agent UI Loop turns that into a repeatable, agent-native loop.
-
-This is **not** “AI makes prettier websites,” visual QA theater, screenshot tourism, or a Percy/Chromatic clone.
-
-**Acceptance-driven UI verification with evidence.**
-
----
-
-## Install
+Then, on your app:
 
 ```bash
-pip install .
-python -m playwright install chromium
-```
-
-Chromium is required. The CLI will try to install it on first launch if it is missing; CI should run `python -m playwright install chromium --with-deps`.
-
----
-
-## Quick start on your app
-
-```bash
+agent-ui-loop --help
 agent-ui-loop init --url http://localhost:3000
-# start your UI
-agent-ui-loop run
+agent-ui-loop run --url http://localhost:3000
 agent-ui-loop prove
 ```
 
-### Acceptance contract
+Chromium is required. The first browser launch installs it if missing; CI should still run `python -m playwright install chromium --with-deps`.
 
-`agent-ui-loop.yml` is the product. Keep it small.
+## Works with
+
+| Agent | How |
+| --- | --- |
+| **Claude Code** | Native skill: [`.claude/skills/agent-ui-loop/SKILL.md`](.claude/skills/agent-ui-loop/SKILL.md) (`init` copies it into the project) |
+| **Cursor** | Adapter — CLI workflow in [`adapters/cursor`](adapters/cursor) |
+| **Codex** | CLI-compatible — [`adapters/codex`](adapters/codex) |
+| **OpenCode** | CLI-compatible — [`adapters/opencode`](adapters/opencode) |
+
+The product is the CLI protocol (`run` → evidence → `prove`). Adapters do not fork the runner.
+
+---
+
+## From “Done” to “Proved”
+
+![Static hero: CLAIM → VERIFY → FAIL → EVIDENCE → FIX → PROVE](assets/hero/agent-ui-loop-hero.png)
+
+<p align="center"><sub>The static visual is a summary of the loop, not a GIF frame.</sub></p>
+
+```
+Agent
+  →  DONE
+Agent UI Loop
+  →  ACCEPTANCE
+  →  REAL BROWSER
+  →  VERIFICATION
+  →  EVIDENCE
+  →  FIX
+  →  REVERIFY
+  →  PROOF
+```
+
+An agent can ship a login page that looks fine at 1440×900 and still overflow at 390×844. “Done” is a claim. Overflow `scrollWidth=593` vs `viewportWidth=390` is a measurement.
+
+![Mobile acceptance fails: CTA wider than the 390×844 viewport, scrollWidth=593](assets/screenshots/mobile-failure.png)
+
+<p align="center"><sub>Mobile acceptance fails because the rendered CTA is wider than the viewport (<code>scrollWidth=593</code>, <code>viewportWidth=390</code>).</sub></p>
+
+![Before failed mobile CTA vs after verified wrapped CTA](assets/screenshots/before-after.png)
+
+<p align="center"><sub>The same page after the demo’s CSS fix. Overflow is gone; the run is VERIFIED.</sub></p>
+
+The demo **does** edit the sample app’s CSS. It does **not** edit your repository.
+
+---
+
+## What it verifies
+
+Checks are deterministic (DOM, geometry, console, network, files). Not an LLM.
+
+**UI**
+
+| Check | Measures |
+| --- | --- |
+| `element-exists` / `element-visible` | selector present / visible |
+| `element-in-viewport` | bounding box vs viewport |
+| `no-horizontal-overflow` | `scrollWidth` vs `innerWidth` |
+| `no-clipping` | testids without intersection |
+| `no-broken-images` | `img.naturalWidth === 0` |
+
+**Runtime**
+
+| Check | Measures |
+| --- | --- |
+| `no-console-errors` | `console.error` / page errors |
+| `no-network-failures` | failed or 4xx/5xx requests |
+| `route-available` | the route responds |
+
+**HTTP / code / tests**
+
+| Check | Measures |
+| --- | --- |
+| `http-status` | status code for a path |
+| `file-exists` | path on disk |
+| `command` | argv subprocess, allowlisted binaries, no shell |
+
+**Journeys** (not an E2E framework): `fill`, `click`, `visible`, `wait`
+
+**Optional:** `a11y-names`, `a11y-contrast`, `reference-compare`, `color_schemes`. Useful, not a visual-regression product.
+
+Schema: [`docs/acceptance-contract.md`](docs/acceptance-contract.md).
+
+---
+
+## Acceptance contract
+
+Copy, change `url` and selectors, run. This is the current schema:
 
 ```yaml
+task:
+  name: responsive-login
+
 url: http://localhost:3000
+
 routes:
   - /login
+
 viewports:
   - name: desktop
     width: 1440
@@ -87,148 +160,190 @@ viewports:
   - name: mobile
     width: 390
     height: 844
+
 requirements:
   - type: element-visible
     selector: "[data-testid='primary-cta']"
+  - type: element-visible
+    selector: "[data-testid='login-form']"
   - type: no-horizontal-overflow
   - type: no-console-errors
   - type: no-network-failures
-  - type: no-broken-images
+  - type: route-available
 ```
 
----
+More: [`contracts/`](contracts/), [`examples/`](examples/).
 
-## The killer story
-
-Agent says: **“Login page is complete.”**
-
-Agent UI Loop opens real Chromium:
-
-```
-/login  desktop 1440×900   ✓
-/login  mobile  390×844    ✗  no-horizontal-overflow
-        scrollWidth > viewportWidth  (CTA clipped)
-```
-
-Evidence: mobile screenshot + measurements — not a vibe.
-
-Agent fixes CSS. Re-run. **Acceptance passed. VERIFIED.**
-
-`agent-ui-loop demo` is that story, end to end, with a genuine defect.
+![Acceptance criteria → real browser → evidence → proof](assets/diagrams/acceptance-flow.svg)
 
 ---
 
 ## Proof
 
+This is **auditable evidence, not cryptographic proof.**
+
+![AGENT COMPLETION PROOF from a real verified run: 6/6 requirements, VERIFIED](assets/screenshots/proof.png)
+
+<p align="center"><sub>Machine-readable proof from a verified run. Raw artifact: <a href="assets/examples/proof.json">assets/examples/proof.json</a> · text: <a href="docs/sample-proof.txt">docs/sample-proof.txt</a></sub></p>
+
+Fields the implementation actually writes (`kind: agent-completion-proof`, `schemaVersion: 3`):
+
 ```
-AGENT UI PROOF
-────────────────────────────
-Route                 /login       ✓
-Desktop               1440×900     ✓
-Mobile                390×844      ✓
-Primary element visible            ✓
-No horizontal overflow             ✓
-No broken images                   ✓
-No console errors                  ✓
-Evidence:
-  screenshots/desktop--login.png
-  screenshots/mobile--login.png
-  report.json
-Commit:
-  abc1234
+AGENT COMPLETION PROOF
+Task:                  login-page
+Requirements:          6
+Passed:                6
+Failed:                0
+Route                 /login        ✓
+Desktop               1440×900      ✓
+Mobile                390×844       ✓
+… visibility, overflow, console, journey, route …
 RESULT: VERIFIED ✓
 ```
 
-Proof is generated from stored run artifacts. It is never invented.
-
-Each run writes:
+Each run directory:
 
 ```
-.agent-ui-loop/runs/<run-id>/
-  report.json
-  report.md
-  proof.txt
-  screenshots/
-  console.log
-  network.log
-  run-meta.json
+.agent-ui-loop/runs/<id>/
+  proof.json   proof.txt   proof.md   github.md
+  report.json  graph.json  run-meta.json
+  screenshots/ logs/
 ```
 
-Before/after comparison is included when a previous run exists (`agent-ui-loop compare`).
-
----
-
-## Deterministic checks (layer 1)
-
-These use the DOM, viewport geometry, console, and network — not an LLM.
-
-| Type | What it measures |
-| --- | --- |
-| `no-console-errors` | `console.error` / page errors |
-| `no-network-failures` | HTTP 4xx/5xx and failed requests |
-| `element-exists` | `document.querySelector` |
-| `element-visible` | computed style + Playwright visibility |
-| `no-horizontal-overflow` | `scrollWidth` vs `innerWidth` |
-| `no-broken-images` | `img.naturalWidth === 0` |
-| `element-in-viewport` | `getBoundingClientRect()` vs viewport |
-| `no-clipping` | `[data-testid]` elements with no intersection |
-
-**Layer 2** (optional visual reasoning) is suggestion-only and off by default. **Layer 3** (subjective design) never auto-modifies code.
-
-Local-first: screenshots and source are not uploaded.
-
----
-
-## Agent loop
-
-1. Agent edits the UI
-2. Agent runs `agent-ui-loop run`
-3. Agent reads structured failures (`--- agent-summary ---` JSON)
-4. Agent fixes layer-1 failures using evidence
-5. Re-run until pass
-6. `agent-ui-loop prove`
-
-Claude Code: copy or install [`.claude/skills/agent-ui-loop/SKILL.md`](.claude/skills/agent-ui-loop/SKILL.md). `init` writes the skill into the current project.
-
-Thin adapters: [`adapters/cursor`](adapters/cursor), [`adapters/codex`](adapters/codex), [`adapters/opencode`](adapters/opencode).
+Format: [`docs/proof-format.md`](docs/proof-format.md).
 
 ---
 
 ## GitHub Action
 
-Minimal composite action: install, run Chromium with `--with-deps`, verify, upload `.agent-ui-loop/runs/` as an artifact.
+This repository ships a **composite** Action ([`action.yml`](action.yml)). It is **not** a GitHub Marketplace listing. After checkout, reference this repo with `uses: ./`.
+
+It will not start your app. Serve a URL, then verify. Chromium is installed with `--with-deps`. Artifacts (`proof`, screenshots, reports) upload as `agent-ui-proof`. `github.md` is appended to the job summary. Optional PR comment needs `comment: true` and a token.
 
 ```yaml
-- uses: actions/setup-python@v5
-  with:
-    python-version: "3.12"
-# After your app is actually serving a URL:
-- uses: ./   # or this repository at a tag, once published
+- uses: actions/checkout@v4
+
+# start your UI so the URL responds
+
+- uses: ./
   with:
     url: http://127.0.0.1:3000
     config: agent-ui-loop.yml
+    comment: "false"
 ```
 
-See [`action.yml`](action.yml) and [`examples/github-workflow.yml`](examples/github-workflow.yml).
+Full workflow sketch: [`examples/github-workflow.yml`](examples/github-workflow.yml).
 
-Browsers on GitHub-hosted runners need `python -m playwright install chromium --with-deps`. This Action does that. It will not start your application for you.
+No GitHub UI screenshot is included — this environment did not produce a live Actions run to photograph.
 
 ---
 
-## CLI
+## Agent integrations
+
+```
+WRITE → RUN → VERIFY → EVIDENCE → FIX → REVERIFY → PROVE
+```
+
+1. Agent edits the UI.
+2. `agent-ui-loop run` (or `--json`).
+3. Agent reads failures + evidence (not vibes).
+4. Agent fixes the UI.
+5. Re-run until pass.
+6. `agent-ui-loop prove` → **VERIFIED**.
+
+Claude Code skill teaches that loop. Cursor / Codex / OpenCode use the same CLI.
+
+---
+
+## What this is not
+
+Not another E2E framework, browser-automation library, visual-regression SaaS, screenshot utility, or AI UI generator.
+
+**What it adds:** acceptance criteria + real-browser verification + evidence + proof + reverification.
+
+Category: **Agent UI Verification** for AI coding agents.
+
+---
+
+## Examples
+
+Runnable contracts against the bundled login fixture:
+
+```bash
+python examples/serve.py          # terminal 1
+agent-ui-loop run --config examples/mobile-overflow/agent-ui-loop.yml --url http://127.0.0.1:48721
+```
+
+| Path | Story |
+| --- | --- |
+| [`examples/mobile-overflow`](examples/mobile-overflow/) | Mobile overflow fails on purpose |
+| [`examples/responsive-ui`](examples/responsive-ui/) | Two viewports, layout + runtime |
+| [`examples/login-flow`](examples/login-flow/) | Form + journey fill/click |
+| [`examples/journey`](examples/journey/) | Continue → dashboard |
+
+---
+
+## Repository structure
+
+```
+src/agent_ui_loop/     CLI, runner, checks, demo, proof
+contracts/             copyable YAML
+examples/              runnable stories
+adapters/              Cursor / Codex / OpenCode
+checks/                how to add a check
+.claude/skills/        native Claude Code skill
+action.yml             composite GitHub Action
+assets/                real demo visuals + brand diagrams
+docs/                  contract, proof format, security
+```
+
+---
+
+## Contributing
+
+Checks, adapters, examples, contracts, and docs are the useful surface. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+---
+
+## Installation and CLI
+
+```bash
+pip install .
+python -m playwright install chromium
+agent-ui-loop init
+agent-ui-loop run --url http://localhost:3000
+agent-ui-loop prove
+agent-ui-loop compare
+agent-ui-loop demo
+```
 
 | Command | Purpose |
 | --- | --- |
-| `agent-ui-loop init` | Write `agent-ui-loop.yml` + Claude skill |
-| `agent-ui-loop run` | Verify |
-| `agent-ui-loop check` | Alias of `run` |
-| `agent-ui-loop prove` | Print proof for the latest run |
-| `agent-ui-loop compare` | Before/after between last two runs |
-| `agent-ui-loop demo` | Killer demo with a real mobile overflow |
+| `init` | Write `agent-ui-loop.yml` + Claude skill |
+| `run` / `check` | Verify in Chromium |
+| `prove` | Print proof for the latest run |
+| `compare` | Before/after of the last two runs |
+| `demo` | Fail → sample fix → VERIFIED |
 
-`--json` for agents. Exit code `0` pass / verified, `1` failed checks, `2` config, `3` runtime (server/browser/timeout).
+`--json` for agents. Exit `0` pass / verified, `1` failed checks, `2` config, `3` runtime.
 
-User-facing errors always include **what / why / how to fix**. Stack traces stay off the happy path.
+When PyPI publication happens, `pip install agent-ui-loop` will be the canonical line. Until then, use `pip install .` from source.
+
+Upload [`assets/social/github-social-preview.png`](assets/social/github-social-preview.png) manually in the GitHub repo settings if you want it as the social preview. The file does not apply itself.
+
+---
+
+## Limitations
+
+- Playwright Chromium must be installed.
+- You must serve the app; the Action and CLI do not start it (except `demo`).
+- Journeys are four actions, not a full E2E runner.
+- Optional a11y / reference / color-scheme checks are not a visual QA suite.
+- Layer-2 “vision” is not a working product in this release.
+- Auth walls, captchas, and third-party widgets are outside the default contract.
+- `command` checks are argv + allowlist only.
+- Proof is auditable evidence, not cryptography.
+- Package and Marketplace publication are **not** done.
 
 ---
 
@@ -239,19 +354,12 @@ pip install -e ".[dev]"
 python -m playwright install chromium
 pytest
 agent-ui-loop demo
-python scripts/record_gif.py   # regenerates docs/demo.gif from a live run
+python scripts/build_release_assets.py   # regenerates assets/ from a live run
 ```
 
-See `docs/acceptance-contract.md`, `docs/proof-format.md`, and `docs/SECURITY.md` for the V3 contract, proof schema, and network behavior.
-
+[`CHANGELOG.md`](CHANGELOG.md) · [`docs/SECURITY.md`](docs/SECURITY.md) · [`docs/evidence-graph.md`](docs/evidence-graph.md)
 
 ---
-
-## Contributing
-
-New checks, example configs, and thin agent adapters are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`checks/README.md`](checks/README.md).
-
-No marketplace, cloud backend, or dashboard.
 
 ## License
 

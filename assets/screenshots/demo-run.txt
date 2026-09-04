@@ -1,0 +1,159 @@
+
+Agent UI Loop
+Agent:  "Done."
+Loop:   Prove it.
+Opening real Chromium → http://127.0.0.1:48721/login
+
+
+Agent UI Loop  ·  require  ·  verify  ·  prove
+task    login-page
+url     http://127.0.0.1:48721
+run     20260904T034353Z-e080ffa7
+commit  4071f1e
+
+VERIFYING 5 REQUIREMENT TYPE(S)  ·  adversarial invalidate-claim
+
+/login  desktop 1440×900
+  ✓  element-visible
+  ✓  element-visible
+  ✓  no-horizontal-overflow
+  ✓  no-console-errors
+  ✓  journey
+  ✓  route-available
+
+/login  mobile 390×844
+  ✓  element-visible
+  ✓  element-visible
+  ✗  no-horizontal-overflow
+      horizontal overflow: scrollWidth=593 viewportWidth=390
+      evidence: {"scrollWidth": 593, "viewportWidth": 390, "overflowPx": 203}
+  ✓  no-console-errors
+
+RESULT: FAILED  (1 check)
+
+FAILURES (actionable / layer 1)
+- /login @ mobile 390×844 · no-horizontal-overflow
+  horizontal overflow: scrollWidth=593 viewportWidth=390
+  screenshot: screenshots/mobile--login.png
+
+Evidence: /workspace/.agent-ui-loop/runs/20260904T034353Z-e080ffa7
+
+--- agent-summary ---
+{
+  "status": "failed",
+  "taskName": "login-page",
+  "schemaVersion": 3,
+  "runId": "20260904T034353Z-e080ffa7",
+  "runDir": "/workspace/.agent-ui-loop/runs/20260904T034353Z-e080ffa7",
+  "commit": "4071f1e5fdadd33956047802f00d2b077bfa3952",
+  "adversarial": {
+    "mode": "invalidate-completion-claim",
+    "attempted": 10,
+    "invalidated": 1
+  },
+  "failed": 1,
+  "passed": 9,
+  "failures": [
+    {
+      "check": "no-horizontal-overflow",
+      "route": "/login",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "colorScheme": null
+      },
+      "message": "horizontal overflow: scrollWidth=593 viewportWidth=390",
+      "evidence": {
+        "scrollWidth": 593,
+        "viewportWidth": 390,
+        "overflowPx": 203
+      },
+      "screenshot": "screenshots/mobile--login.png",
+      "actionable": true,
+      "layer": 1
+    }
+  ]
+}
+That failure is real: the CTA is wider than the 390px mobile viewport.
+
+Applying the CSS fix (constrain the CTA to 100% width) …
+
+Agent UI Loop  ·  require  ·  verify  ·  prove
+task    login-page
+url     http://127.0.0.1:48721
+run     20260904T034354Z-6174cbe2
+commit  4071f1e
+
+VERIFYING 5 REQUIREMENT TYPE(S)  ·  adversarial invalidate-claim
+
+/login  desktop 1440×900
+  ✓  element-visible
+  ✓  element-visible
+  ✓  no-horizontal-overflow
+  ✓  no-console-errors
+  ✓  journey
+  ✓  route-available
+
+/login  mobile 390×844
+  ✓  element-visible
+  ✓  element-visible
+  ✓  no-horizontal-overflow
+  ✓  no-console-errors
+
+RESULT: PASSED
+
+Evidence: /workspace/.agent-ui-loop/runs/20260904T034354Z-6174cbe2
+
+--- agent-summary ---
+{
+  "status": "passed",
+  "taskName": "login-page",
+  "schemaVersion": 3,
+  "runId": "20260904T034354Z-6174cbe2",
+  "runDir": "/workspace/.agent-ui-loop/runs/20260904T034354Z-6174cbe2",
+  "commit": "4071f1e5fdadd33956047802f00d2b077bfa3952",
+  "adversarial": {
+    "mode": "invalidate-completion-claim",
+    "attempted": 10,
+    "invalidated": 0
+  },
+  "failed": 0,
+  "passed": 10,
+  "failures": []
+}
+AGENT COMPLETION PROOF
+────────────────────────────
+Task:                  login-page
+Requirements:          6
+Passed:                6
+Failed:                0
+
+Route                 /login        ✓
+Desktop               1440×900      ✓
+Mobile                390×844       ✓
+Primary element visible `[data-testid='primary-cta']`              ✓
+Primary element visible `[data-testid='login-form']`              ✓
+No horizontal overflow              ✓
+No console errors                   ✓
+Journey                             ✓
+Route available                     ✓
+
+Evidence:
+  screenshots/desktop--login.png
+  screenshots/mobile--login.png
+  logs/console.log
+  logs/network.log
+  /workspace/.agent-ui-loop/runs/20260904T034354Z-6174cbe2/report.json
+
+Before / after:
+  no-horizontal-overflow @ /login mobile: failed → passed
+
+Commit:
+  4071f1e
+
+Proof means auditable evidence, not cryptography.
+
+RESULT: VERIFIED ✓
+Artifacts: /workspace/.agent-ui-loop/runs
+Demo app:  /workspace/.agent-ui-loop/demo/app

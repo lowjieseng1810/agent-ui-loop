@@ -1,0 +1,27 @@
+task:
+  name: continue-to-dashboard
+
+url: http://127.0.0.1:48721
+
+routes:
+  - /login
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 900
+
+requirements:
+  - type: element-visible
+    selector: "[data-testid='primary-cta']"
+  - type: route-available
+
+journeys:
+  - name: continue-to-dashboard
+    route: /login
+    viewport: desktop
+    steps:
+      - action: click
+        selector: "[data-testid='primary-cta']"
+      - action: visible
+        selector: "[data-testid='dashboard']"

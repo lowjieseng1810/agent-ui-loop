@@ -1,0 +1,160 @@
+{
+  "kind": "agent-completion-proof",
+  "schemaVersion": 3,
+  "verified": true,
+  "status": "VERIFIED",
+  "disclaimer": "Auditable verification evidence, not a cryptographic proof.",
+  "taskName": "login-page",
+  "requirements": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "rows": [
+      {
+        "check": "element-visible",
+        "selector": "[data-testid='primary-cta']",
+        "label": "Primary element visible",
+        "status": "passed",
+        "instances": 2
+      },
+      {
+        "check": "element-visible",
+        "selector": "[data-testid='login-form']",
+        "label": "Primary element visible",
+        "status": "passed",
+        "instances": 2
+      },
+      {
+        "check": "no-horizontal-overflow",
+        "selector": null,
+        "label": "No horizontal overflow",
+        "status": "passed",
+        "instances": 2
+      },
+      {
+        "check": "no-console-errors",
+        "selector": null,
+        "label": "No console errors",
+        "status": "passed",
+        "instances": 2
+      },
+      {
+        "check": "journey",
+        "selector": null,
+        "label": "Journey",
+        "status": "passed",
+        "instances": 1
+      },
+      {
+        "check": "route-available",
+        "selector": null,
+        "label": "Route available",
+        "status": "passed",
+        "instances": 1
+      }
+    ]
+  },
+  "commit": "4071f1e5fdadd33956047802f00d2b077bfa3952",
+  "commitShort": "4071f1e",
+  "runId": "20260904T034351Z-a4f2ca43",
+  "runDir": "/workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T034351Z-a4f2ca43",
+  "url": "http://127.0.0.1:48741",
+  "rows": [
+    {
+      "label": "Route",
+      "value": "/login",
+      "status": "passed"
+    },
+    {
+      "label": "Desktop",
+      "value": "1440\u00d7900",
+      "status": "passed"
+    },
+    {
+      "label": "Mobile",
+      "value": "390\u00d7844",
+      "status": "passed"
+    },
+    {
+      "label": "Primary element visible `[data-testid='primary-cta']`",
+      "value": "",
+      "status": "passed"
+    },
+    {
+      "label": "Primary element visible `[data-testid='login-form']`",
+      "value": "",
+      "status": "passed"
+    },
+    {
+      "label": "No horizontal overflow",
+      "value": "",
+      "status": "passed"
+    },
+    {
+      "label": "No console errors",
+      "value": "",
+      "status": "passed"
+    },
+    {
+      "label": "Journey",
+      "value": "",
+      "status": "passed"
+    },
+    {
+      "label": "Route available",
+      "value": "",
+      "status": "passed"
+    }
+  ],
+  "screenshots": [
+    "screenshots/desktop--login.png",
+    "screenshots/mobile--login.png"
+  ],
+  "logs": [
+    "logs/console.log",
+    "logs/network.log"
+  ],
+  "reportJson": "/workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T034351Z-a4f2ca43/report.json",
+  "failures": [],
+  "adversarial": {
+    "mode": "invalidate-completion-claim",
+    "attempted": 10,
+    "invalidated": 0
+  },
+  "previous": {
+    "runId": "20260904T034350Z-8a6750cd",
+    "status": "failed",
+    "comparison": [
+      {
+        "check": "no-horizontal-overflow",
+        "route": "/login",
+        "viewport": {
+          "name": "mobile",
+          "width": 390,
+          "height": 844,
+          "colorScheme": null
+        },
+        "before": "failed",
+        "after": "passed",
+        "beforeMessage": "horizontal overflow: scrollWidth=593 viewportWidth=390",
+        "afterMessage": "no horizontal overflow",
+        "beforeEvidence": {
+          "scrollWidth": 593,
+          "clientWidth": 390,
+          "viewportWidth": 390,
+          "viewportHeight": 844,
+          "overflowPx": 203,
+          "tolerancePx": 1
+        },
+        "afterEvidence": {
+          "scrollWidth": 390,
+          "clientWidth": 390,
+          "viewportWidth": 390,
+          "viewportHeight": 844,
+          "overflowPx": 0,
+          "tolerancePx": 1
+        }
+      }
+    ]
+  }
+}

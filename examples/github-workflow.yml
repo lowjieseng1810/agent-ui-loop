@@ -1,11 +1,9 @@
-# Agent UI Loop — GitHub Action
+# Agent UI Loop — verify a running UI from GitHub Actions
 #
-# This workflow verifies a running web UI with Playwright Chromium.
-# It does not start your app for you: start the app in an earlier step,
-# then point Agent UI Loop at the URL.
-#
-# Playwright on GitHub-hosted runners needs:
-#   python -m playwright install chromium --with-deps
+# Composite action in this repository — not a Marketplace listing.
+# After checkout, use `uses: ./`.
+# The Action does not start your app. Serve a URL first, then verify.
+# Chromium is installed with `python -m playwright install chromium --with-deps`.
 
 name: Agent UI Loop
 
@@ -18,23 +16,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      # Start YOUR app so the URL below actually responds.
+      # - name: Start preview
+      #   run: |
+      #     npm ci
+      #     npm run start -- --port 3000 &
+      #     npx wait-on http://127.0.0.1:3000
+
+      - name: Verify UI acceptance
+        uses: ./
         with:
-          python-version: "3.12"
-      - name: Install Agent UI Loop
-        run: |
-          pip install .
-          python -m playwright install chromium --with-deps
-      - name: Run verification
-        # Replace with your real preview URL, or start the app in a previous step.
-        run: |
-          echo "Start your UI, then run:"
-          echo "  agent-ui-loop run --url http://127.0.0.1:PORT"
-        continue-on-error: true
-      - name: Upload evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: agent-ui-loop-evidence
-          path: .agent-ui-loop/runs/
-          if-no-files-found: ignore
+          url: http://127.0.0.1:3000
+          config: agent-ui-loop.yml
+          comment: "false"
+
+      # Uploads .agent-ui-loop/runs/ as artifact `agent-ui-proof`
+      # and writes github.md into the job summary.
+      # Optional PR comment: comment: "true" plus github-token: ${{ secrets.GITHUB_TOKEN }}

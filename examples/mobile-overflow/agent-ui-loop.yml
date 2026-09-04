@@ -1,0 +1,22 @@
+task:
+  name: mobile-overflow
+
+url: http://127.0.0.1:48721
+
+routes:
+  - /login
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 900
+  - name: mobile
+    width: 390
+    height: 844
+
+requirements:
+  - type: element-visible
+    selector: "[data-testid='primary-cta']"
+  - type: no-horizontal-overflow
+  - type: no-console-errors
+  - type: route-available

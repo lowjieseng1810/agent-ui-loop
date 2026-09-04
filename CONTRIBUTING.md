@@ -1,18 +1,14 @@
 # Contributing
 
-Thanks for helping agents prove that a UI actually works.
+Thanks for helping AI coding agents **prove** that a UI actually passed its acceptance criteria.
 
-## What this project is
+```
+WRITE → RUN → VERIFY → EVIDENCE → FIX → REVERIFY → PROVE
+```
 
-Acceptance-driven UI verification with evidence:
+This is not a SaaS, dashboard, visual-regression cloud, or UI generator.
 
-REQUIRE → EXECUTE → VERIFY → EVIDENCE → FIX → RE-VERIFY → PROVE
-
-See `checks/README.md` and `docs/acceptance-contract.md`.
-
-It is not a SaaS, dashboard, visual-regression cloud, or aesthetic redesign tool.
-
-## Development
+## Setup
 
 ```bash
 python -m venv .venv
@@ -23,27 +19,33 @@ pytest
 agent-ui-loop demo
 ```
 
-## Good contributions
+## Where to contribute
 
-- New **deterministic** checks with tests and a fixture page
-- Example configs under `examples/`
-- Thin agent adapters under `adapters/` (docs + snippets, not forks of the runner)
-- Reliability and error-message improvements
+| Area | Path | What to add |
+| --- | --- | --- |
+| Checks | `checks/`, `src/agent_ui_loop/checks/` | Deterministic measurements with evidence |
+| Adapters | `adapters/` | Docs for invoking the CLI from an agent |
+| Examples | `examples/` | Runnable contracts against a real page |
+| Contracts | `contracts/` | Copyable YAML using the current schema |
+| Docs | `docs/`, README | Accuracy over slogans |
+
+Keep the YAML small. Measure something real. Fail closed.
+
+See [checks/README.md](checks/README.md) and [docs/acceptance-contract.md](docs/acceptance-contract.md).
+
+## Process
+
+1. Open an issue if the change is a new check type (so we can keep the schema tight).
+2. Add tests that use fixture HTML + Chromium when the check claims to observe a page.
+3. Do not stub Playwright away for those checks.
+4. Send a PR with what changed and how you ran it.
+
+No CLA, no issue-template maze. Be kind; be specific.
 
 ## Not a fit
 
 - Marketplaces / plugin stores
 - Cloud backends that upload screenshots by default
 - Subjective design auto-editors
-- Giant DSLs
-
-## Check contract
-
-1. Measure something real in the browser
-2. Record the numbers in `evidence`
-3. Fail closed on missing required elements
-4. Keep the YAML schema small
-
-## Tests
-
-Do not add tests that stub away Playwright for checks that claim to observe a page. Fixture HTML + a local HTTP server + Chromium is the expected pattern (see `tests/`).
+- Giant E2E DSLs
+- Fake screenshots or invented proof fields

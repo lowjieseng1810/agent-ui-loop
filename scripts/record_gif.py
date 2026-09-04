@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build docs/demo.gif from a real demo run (actual screenshots + captions)."""
+"""Legacy GIF helper. Prefer: python scripts/build_release_assets.py"""
 
 from __future__ import annotations
 

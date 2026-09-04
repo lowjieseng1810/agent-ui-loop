@@ -1,0 +1,28 @@
+# Copy → modify `url` / selectors → run
+# agent-ui-loop run --config contracts/login-responsive.yml
+
+task:
+  name: responsive-login
+
+url: http://localhost:3000
+
+routes:
+  - /login
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 900
+  - name: mobile
+    width: 390
+    height: 844
+
+requirements:
+  - type: element-visible
+    selector: "[data-testid='primary-cta']"
+  - type: element-visible
+    selector: "[data-testid='login-form']"
+  - type: no-horizontal-overflow
+  - type: no-console-errors
+  - type: no-network-failures
+  - type: route-available

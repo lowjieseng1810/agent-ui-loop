@@ -153,7 +153,7 @@ def compare(json_mode: bool) -> None:
 
 
 @main.command()
-@click.option("--keep", is_flag=True, help="leave demo files under .agent-ui-loop/demo")
+@click.option("--keep/--no-keep", default=True, show_default=True, help="leave demo app under .agent-ui-loop/demo")
 @click.option("--json", "json_mode", is_flag=True)
 @click.option("--no-fix", is_flag=True, help="stop after the intentional failure")
 def demo(keep: bool, json_mode: bool, no_fix: bool) -> None:
@@ -171,10 +171,10 @@ def demo(keep: bool, json_mode: bool, no_fix: bool) -> None:
         config = demo_config(url)
         if not json_mode:
             click.echo()
-            click.echo("KILLER DEMO  ·  Agent UI Loop V3")
-            click.echo("Agent says: “Login page is complete.”")
-            click.echo("Verifier: invalidate that claim against the acceptance contract.")
-            click.echo(f"Opening real Chromium against {url}/login …")
+            click.echo("Agent UI Loop")
+            click.echo('Agent:  "Done."')
+            click.echo("Loop:   Prove it.")
+            click.echo(f"Opening real Chromium → {url}/login")
             click.echo()
         try:
             before = run_verification(config, cwd=cwd)
@@ -208,9 +208,16 @@ def demo(keep: bool, json_mode: bool, no_fix: bool) -> None:
                 previous = load_report(prev) if prev else before
                 proof = build_proof(report, previous)
                 click.echo(render_proof_text(proof, color=_color()), nl=False)
-        if not keep:
-            pass
+            click.echo(f"Artifacts: {cwd / '.agent-ui-loop' / 'runs'}")
+            if keep:
+                click.echo(f"Demo app:  {demo_root / 'app'}")
         raise SystemExit(0 if after.get("status") == "passed" else 1)
     finally:
         server.shutdown()
         server.server_close()
+        if not keep and demo_root.exists():
+            shutil.rmtree(demo_root, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    main()

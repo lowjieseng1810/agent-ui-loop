@@ -5,17 +5,26 @@ build-backend = "hatchling.build"
 [project]
 name = "agent-ui-loop"
 version = "0.3.0"
-description = "Acceptance-driven UI verification with evidence for AI coding agents."
+description = "Agent UI verification for AI coding agents — run the real browser, verify acceptance criteria, capture evidence, and produce proof."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "Agent UI Loop" }]
 keywords = [
-  "ai-agents",
+  "ai-coding-agents",
+  "agent-ui-verification",
   "ui-verification",
-  "acceptance-testing",
-  "playwright",
+  "ui-acceptance",
+  "acceptance-criteria",
+  "browser-verification",
   "evidence",
+  "proof",
+  "playwright",
+  "claude-code",
+  "cursor",
+  "codex",
+  "opencode",
+  "github-action",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -23,6 +32,9 @@ classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Quality Assurance",
   "Topic :: Software Development :: Testing",
 ]
@@ -36,6 +48,7 @@ dependencies = [
 dev = [
   "pytest>=8.0",
   "pillow>=10.0",
+  "build>=1.2",
 ]
 gif = [
   "pillow>=10.0",
@@ -46,6 +59,28 @@ agent-ui-loop = "agent_ui_loop.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_ui_loop"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/docs",
+  "/assets",
+  "/examples",
+  "/contracts",
+  "/adapters",
+  "/checks",
+  "/scripts",
+  "/.claude",
+  "/.github",
+  "/action.yml",
+  "/LICENSE",
+  "/README.md",
+  "/CONTRIBUTING.md",
+  "/CHANGELOG.md",
+  "/SECURITY.md",
+  "/pyproject.toml",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

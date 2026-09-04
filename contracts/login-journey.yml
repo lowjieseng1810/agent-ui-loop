@@ -1,0 +1,32 @@
+# Journey primitives: fill | click | visible | wait
+
+task:
+  name: login-journey
+
+url: http://localhost:3000
+
+routes:
+  - /login
+
+viewports:
+  - name: desktop
+    width: 1440
+    height: 900
+
+requirements:
+  - type: element-visible
+    selector: "[data-testid='primary-cta']"
+  - type: route-available
+
+journeys:
+  - name: continue-to-dashboard
+    route: /login
+    viewport: desktop
+    steps:
+      - action: fill
+        selector: "input[name='email']"
+        value: "ada@northwind.dev"
+      - action: click
+        selector: "[data-testid='primary-cta']"
+      - action: visible
+        selector: "[data-testid='dashboard']"
