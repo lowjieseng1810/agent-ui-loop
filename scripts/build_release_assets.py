@@ -195,53 +195,98 @@ def social() -> Image.Image:
     return img
 
 
-def hero_static() -> Image.Image:
-    img = Image.new("RGB", (1200, 640), BG)
+W, H = 1280, 720
+HEAD_H = 72
+LEFT_W = 760
+
+
+def fit_cover(img: Image.Image, tw: int, th: int, *, bias_left: bool = True) -> Image.Image:
+    ratio = max(tw / img.width, th / img.height)
+    nw, nh = max(1, int(img.width * ratio)), max(1, int(img.height * ratio))
+    resized = img.resize((nw, nh), Image.Resampling.LANCZOS)
+    left = 0 if bias_left else max(0, (nw - tw) // 2)
+    top = max(0, (nh - th) // 2)
+    return resized.crop((left, top, left + tw, top + th))
+
+
+def crop_desktop_ui(img: Image.Image) -> Image.Image:
+    w, h = img.size
+    return img.crop((0, int(h * 0.16), min(w, int(w * 0.52)), int(h * 0.90)))
+
+
+def crop_mobile_problem(img: Image.Image) -> Image.Image:
+    w, h = img.size
+    top = int(h * 0.32)
+    bottom = min(h, int(h * 0.82))
+    return img.crop((0, top, w, bottom))
+
+
+def highlight_cta(img: Image.Image) -> Image.Image:
+    px = img.load()
+    w, h = img.size
+    ys: list[int] = []
+    for y in range(h):
+        hits = 0
+        for x in range(0, w, 2):
+            r, g, b = px[x, y][:3]
+            if abs(r - 37) < 45 and abs(g - 99) < 55 and b > 180:
+                hits += 1
+        if hits > w * 0.12:
+            ys.append(y)
+    if not ys:
+        return img
+    y0, y1 = max(0, min(ys) - 10), min(h - 1, max(ys) + 10)
+    out = img.copy()
+    draw = ImageDraw.Draw(out)
+    draw.rectangle((3, y0, w - 4, y1), outline=(220, 38, 38), width=7)
+    return out
+
+
+def hero_stage(
+    browser: Image.Image,
+    *,
+    kicker: str,
+    title: str,
+    rows: list[tuple[str, str, str]],
+    footer: str,
+    mood: str = "neutral",
+) -> Image.Image:
+    img = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(img)
-    draw.text((56, 36), "AGENT UI LOOP", fill=MUTED, font=font(16, True))
-    draw.text((56, 70), 'Agent: "Done."     Loop: "Prove it."', fill=INK, font=font(28, True))
-    boxes = [
-        (56, 160, "1  CLAIM", '"Login page is complete."', MUTED),
-        (250, 160, "2  VERIFY", "Real Chromium  ·  1440 & 390", AMBER),
-        (444, 160, "3  FAIL", "Mobile overflow caught", RED),
-        (638, 160, "4  EVIDENCE", "screenshot + scrollWidth", INK),
-        (832, 160, "5  FIX", "CSS constrained to viewport", MUTED),
-        (1026, 160, "6  PROVE", "VERIFIED", GREEN),
-    ]
-    for x, y, title, body, color in boxes:
-        rounded(draw, (x, y, x + 178, y + 280), 12, PANEL)
-        draw.text((x + 14, y + 24), title, fill=color, font=font(13, True))
-        # wrap body
-        words = body.split()
-        line, yy = "", y + 80
-        for w in words:
-            trial = (line + " " + w).strip()
-            if font(14).getlength(trial) > 150:
-                draw.text((x + 14, yy), line, fill=INK, font=font(14))
-                line, yy = w, yy + 22
-            else:
-                line = trial
-        if line:
-            draw.text((x + 14, yy), line, fill=INK, font=font(14))
-    rounded(draw, (56, 480, 1144, 590), 12, (6, 78, 59))
-    draw.text((80, 512), "✓  VERIFIED", fill=GREEN, font=font(28, True))
-    draw.text((80, 552), "Auditable evidence — screenshots, measurements, commit — not cryptography.", fill=INK, font=font(16))
+    bar = {"fail": (127, 29, 29), "ok": (6, 78, 59)}.get(mood, (15, 23, 42))
+    draw.rectangle((0, 0, W, HEAD_H), fill=bar)
+    draw.text((24, 12), kicker, fill=(226, 232, 240), font=font(16, True))
+    draw.text((24, 36), title, fill=INK, font=font(28, True))
+
+    left = fit_cover(browser.convert("RGB"), LEFT_W, H - HEAD_H, bias_left=True)
+    img.paste(left, (0, HEAD_H))
+    draw.rectangle((LEFT_W, HEAD_H, LEFT_W + 2, H), fill=LINE)
+
+    rx = LEFT_W + 28
+    y = HEAD_H + 28
+    draw.text((rx, y), "VERIFICATION", fill=MUTED, font=font(14, True))
+    y += 36
+    for mark, label, kind in rows:
+        color = {"pass": GREEN, "fail": RED, "warn": AMBER, "dim": MUTED}.get(kind, INK)
+        draw.text((rx, y), mark, fill=color, font=font(22, True))
+        draw.text((rx + 36, y + 2), label, fill=INK, font=font(20, True))
+        y += 42
+        if y > H - 90:
+            break
+    if footer:
+        draw.text((rx, H - 48), footer, fill=MUTED, font=font(15))
     return img
 
 
 def gif_frame(title: str, body: Image.Image | None, subtitle: str, *, fail=False, ok=False) -> Image.Image:
-    img = Image.new("RGB", (960, 540), BG)
+    img = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(img)
     bar = (127, 29, 29) if fail else ((6, 78, 59) if ok else PANEL)
-    draw.rectangle((0, 0, 960, 88), fill=bar)
-    draw.text((28, 18), title, fill=INK, font=font(24, True))
-    draw.text((28, 52), subtitle, fill=(226, 232, 240), font=font(16))
+    draw.rectangle((0, 0, W, HEAD_H), fill=bar)
+    draw.text((24, 14), title, fill=INK, font=font(26, True))
+    draw.text((24, 46), subtitle, fill=(226, 232, 240), font=font(16))
     if body is not None:
-        max_w, max_h = 880, 400
-        ratio = min(max_w / body.width, max_h / body.height)
-        nw, nh = max(1, int(body.width * ratio)), max(1, int(body.height * ratio))
-        fitted = body.resize((nw, nh), Image.Resampling.LANCZOS)
-        img.paste(fitted, ((960 - nw) // 2, 88 + (452 - nh) // 2))
+        img.paste(fit_cover(body.convert("RGB"), W, H - HEAD_H), (0, HEAD_H))
     return img
 
 
@@ -331,32 +376,140 @@ def main() -> None:
     save(before_after(fail_shot, ok_shot), ASSETS / "screenshots" / "before-after.png")
     save(proof_image(proof_text), ASSETS / "screenshots" / "proof.png")
     save(social(), ASSETS / "social" / "github-social-preview.png")
-    save(hero_static(), ASSETS / "hero" / "agent-ui-loop-hero.png")
     write_svg_loop(ASSETS / "diagrams" / "verification-loop.svg")
     write_svg_acceptance(ASSETS / "diagrams" / "acceptance-flow.svg")
 
+    desk_ui = crop_desktop_ui(desk)
+    fail_ui = highlight_cta(crop_mobile_problem(fail_shot))
+    ok_ui = crop_mobile_problem(ok_shot)
+    overflow_px = int(ev.get("overflowPx") or (sw - vw))
+
     gif_frames = [
-        gif_frame('Agent: “Done.”', None, "No evidence. Completion is a claim."),
-        gif_frame("Agent UI Loop: Prove it.", desk, "Real Chromium  ·  desktop 1440×900  ·  pass", ok=True),
-        gif_frame("✗  Mobile acceptance failed", fail, f"scrollWidth={sw}  viewportWidth={vw}", fail=True),
-        gif_frame("Evidence captured", fail, "screenshot + DOM measurements  ·  not a guess", fail=True),
-        gif_frame("Demo applies the CSS fix", None, "The demo workflow edits the sample app. It does not edit your repo."),
-        gif_frame("Reverify  ·  mobile", ok_shot, "overflow gone  ·  CTA fits 390×844", ok=True),
-        gif_frame("✓  VERIFIED", ok_shot, "AGENT COMPLETION PROOF written  ·  auditable evidence", ok=True),
+        hero_stage(
+            desk_ui,
+            kicker="AGENT UI LOOP",
+            title='Agent: “Done.”     Loop: “Prove it.”',
+            rows=[
+                ("•", 'Agent: “Done.”', "dim"),
+                ("▶", "Loop: Prove it.", "warn"),
+                ("•", "No evidence yet", "warn"),
+                ("▶", "Open real Chromium", "warn"),
+            ],
+            footer="Acceptance  ·  browser  ·  evidence  ·  proof",
+        ),
+        hero_stage(
+            desk_ui,
+            kicker="ACCEPTANCE",
+            title="What does “Done” mean?",
+            rows=[
+                ("✓", "CTA visible", "pass"),
+                ("✓", "Form functional", "pass"),
+                ("…", "Mobile layout valid", "warn"),
+                ("▶", "Chromium 1440×900 + 390×844", "warn"),
+            ],
+            footer="Explicit criteria — not a vibe",
+        ),
+        hero_stage(
+            desk_ui,
+            kicker="VERIFY  ·  DESKTOP",
+            title="Desktop 1440×900  ·  PASS",
+            rows=[
+                ("✓", "desktop 1440×900", "pass"),
+                ("…", "mobile 390×844 pending", "warn"),
+                ("✓", "CTA / form / console", "pass"),
+            ],
+            footer="Desktop can pass while mobile fails",
+            mood="ok",
+        ),
+        hero_stage(
+            fail_ui,
+            kicker="VERIFY  ·  MOBILE",
+            title="✗  ACCEPTANCE FAILED",
+            rows=[
+                ("✓", "desktop 1440×900", "pass"),
+                ("✗", "mobile overflow", "fail"),
+                ("✗", f"scrollWidth={sw}", "fail"),
+                ("✗", f"viewportWidth={vw}", "fail"),
+                ("✗", f"overflowPx={overflow_px}", "fail"),
+            ],
+            footer="Real rendered UI — not a mock",
+            mood="fail",
+        ),
+        hero_stage(
+            fail_ui,
+            kicker="EVIDENCE",
+            title="Not a guess. Measured.",
+            rows=[
+                ("▣", "screenshot captured", "warn"),
+                ("▣", f"scrollWidth {sw} > {vw}", "fail"),
+                ("▣", "runtime / check result", "warn"),
+                ("→", "Agent reads the failure", "dim"),
+            ],
+            footer="Evidence on disk under .agent-ui-loop/",
+            mood="fail",
+        ),
+        hero_stage(
+            fail_ui,
+            kicker="FIX  ·  SAMPLE APP ONLY",
+            title="Demo constrains the CTA in CSS",
+            rows=[
+                ("!", "Does not edit your repository", "warn"),
+                ("→", "agent-ui-loop demo", "dim"),
+                ("→", "applies sample CSS fix", "dim"),
+                ("→", "then reverifies", "dim"),
+            ],
+            footer="Honest workflow: evidence → you/agent fix → re-run",
+        ),
+        hero_stage(
+            ok_ui,
+            kicker="REVERIFY",
+            title="Same acceptance. Same browser.",
+            rows=[
+                ("✓", "desktop 1440×900", "pass"),
+                ("✓", "mobile 390×844", "pass"),
+                ("✓", "CTA fits the viewport", "pass"),
+            ],
+            footer="Re-run until the claim matches the UI",
+            mood="ok",
+        ),
+        hero_stage(
+            ok_ui,
+            kicker="PROOF",
+            title="✓  VERIFIED",
+            rows=[
+                ("✓", "Acceptance passed", "pass"),
+                ("✓", "Evidence retained", "pass"),
+                ("✓", "PROOF GENERATED", "pass"),
+                ("✓", "Claim is now testable", "pass"),
+            ],
+            footer="Auditable evidence — not cryptography",
+            mood="ok",
+        ),
     ]
     dest = ASSETS / "hero" / "agent-ui-loop-demo.gif"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    durations = [900, 1400, 2800, 2000, 1800, 2000, 2800]
-    gif_frames[0].save(
+    durations = [1800, 1600, 1600, 2600, 2000, 1800, 1600, 2400]
+    quantized = []
+    for fr in gif_frames:
+        try:
+            quantized.append(fr.convert("P", palette=Image.Palette.ADAPTIVE, colors=96))
+        except AttributeError:
+            quantized.append(fr.convert("P", palette=Image.ADAPTIVE, colors=96))
+    quantized[0].save(
         dest,
         save_all=True,
-        append_images=gif_frames[1:],
+        append_images=quantized[1:],
         duration=durations,
         loop=0,
         optimize=True,
     )
     shutil.copyfile(dest, ROOT / "docs" / "demo.gif")
-    print("wrote", dest, file=sys.stderr)
+    save(gif_frames[3], ASSETS / "hero" / "agent-ui-loop-hero.png")
+    preview = ASSETS / "hero" / "gif-preview"
+    preview.mkdir(parents=True, exist_ok=True)
+    for i, fr in enumerate(gif_frames):
+        save(fr, preview / f"frame-{i:02d}.png")
+    print("wrote", dest, "duration_ms", sum(durations), file=sys.stderr)
 
     # stills for docs
     stills = ROOT / "docs" / "stills"

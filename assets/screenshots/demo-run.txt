@@ -8,8 +8,8 @@ Opening real Chromium → http://127.0.0.1:48721/login
 Agent UI Loop  ·  require  ·  verify  ·  prove
 task    login-page
 url     http://127.0.0.1:48721
-run     20260904T034353Z-e080ffa7
-commit  4071f1e
+run     20260904T050021Z-7b9b6aca
+commit  d9c0b09
 
 VERIFYING 5 REQUIREMENT TYPE(S)  ·  adversarial invalidate-claim
 
@@ -36,16 +36,16 @@ FAILURES (actionable / layer 1)
   horizontal overflow: scrollWidth=593 viewportWidth=390
   screenshot: screenshots/mobile--login.png
 
-Evidence: /workspace/.agent-ui-loop/runs/20260904T034353Z-e080ffa7
+Evidence: /workspace/.agent-ui-loop/runs/20260904T050021Z-7b9b6aca
 
 --- agent-summary ---
 {
   "status": "failed",
   "taskName": "login-page",
   "schemaVersion": 3,
-  "runId": "20260904T034353Z-e080ffa7",
-  "runDir": "/workspace/.agent-ui-loop/runs/20260904T034353Z-e080ffa7",
-  "commit": "4071f1e5fdadd33956047802f00d2b077bfa3952",
+  "runId": "20260904T050021Z-7b9b6aca",
+  "runDir": "/workspace/.agent-ui-loop/runs/20260904T050021Z-7b9b6aca",
+  "commit": "d9c0b094014e7b7213b057b3d082805388c532bd",
   "adversarial": {
     "mode": "invalidate-completion-claim",
     "attempted": 10,
@@ -82,8 +82,8 @@ Applying the CSS fix (constrain the CTA to 100% width) …
 Agent UI Loop  ·  require  ·  verify  ·  prove
 task    login-page
 url     http://127.0.0.1:48721
-run     20260904T034354Z-6174cbe2
-commit  4071f1e
+run     20260904T050022Z-15f8cf14
+commit  d9c0b09
 
 VERIFYING 5 REQUIREMENT TYPE(S)  ·  adversarial invalidate-claim
 
@@ -103,16 +103,16 @@ VERIFYING 5 REQUIREMENT TYPE(S)  ·  adversarial invalidate-claim
 
 RESULT: PASSED
 
-Evidence: /workspace/.agent-ui-loop/runs/20260904T034354Z-6174cbe2
+Evidence: /workspace/.agent-ui-loop/runs/20260904T050022Z-15f8cf14
 
 --- agent-summary ---
 {
   "status": "passed",
   "taskName": "login-page",
   "schemaVersion": 3,
-  "runId": "20260904T034354Z-6174cbe2",
-  "runDir": "/workspace/.agent-ui-loop/runs/20260904T034354Z-6174cbe2",
-  "commit": "4071f1e5fdadd33956047802f00d2b077bfa3952",
+  "runId": "20260904T050022Z-15f8cf14",
+  "runDir": "/workspace/.agent-ui-loop/runs/20260904T050022Z-15f8cf14",
+  "commit": "d9c0b094014e7b7213b057b3d082805388c532bd",
   "adversarial": {
     "mode": "invalidate-completion-claim",
     "attempted": 10,
@@ -144,13 +144,13 @@ Evidence:
   screenshots/mobile--login.png
   logs/console.log
   logs/network.log
-  /workspace/.agent-ui-loop/runs/20260904T034354Z-6174cbe2/report.json
+  /workspace/.agent-ui-loop/runs/20260904T050022Z-15f8cf14/report.json
 
 Before / after:
   no-horizontal-overflow @ /login mobile: failed → passed
 
 Commit:
-  4071f1e
+  d9c0b09
 
 Proof means auditable evidence, not cryptography.
 

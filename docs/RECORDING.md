@@ -17,4 +17,4 @@ That runs a **real** verification (broken then fixed sample app), then writes:
 
 `scripts/record_gif.py` is a leftover helper. Prefer `build_release_assets.py`.
 
-Nothing in the GIF is a mock UI or a fabricated measurement. The demo’s CSS fix applies only to the sample app.
+Hero GIF is 1280×720 (16:9): real UI on the left, verification state on the right. Frames come from a live Playwright run, not a mock.

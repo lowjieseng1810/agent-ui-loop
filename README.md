@@ -2,7 +2,7 @@
 
 **Your agent can code. Now make it prove the UI.**
 
-![Agent UI Loop demo: agent claims done, mobile overflow fails, evidence is captured, sample CSS is fixed, verification reruns, VERIFIED](assets/hero/agent-ui-loop-demo.gif)
+![Agent UI Loop: Agent says Done, Loop says Prove it, desktop passes, mobile overflow fails with scrollWidth evidence, sample-app CSS fix, then VERIFIED](assets/hero/agent-ui-loop-demo.gif)
 
 AI coding agents are very good at saying “done.”
 Agent UI Loop makes that claim testable.
@@ -71,9 +71,9 @@ The product is the CLI protocol (`run` → evidence → `prove`). Adapters do no
 
 ## From “Done” to “Proved”
 
-![Static hero: CLAIM → VERIFY → FAIL → EVIDENCE → FIX → PROVE](assets/hero/agent-ui-loop-hero.png)
+![Static fallback: real mobile overflow, ACCEPTANCE FAILED, scrollWidth vs viewportWidth](assets/hero/agent-ui-loop-hero.png)
 
-<p align="center"><sub>The static visual is a summary of the loop, not a GIF frame.</sub></p>
+<p align="center"><sub>Same 16:9 composition as the GIF (FAIL beat). Real screenshot + real measurements.</sub></p>
 
 ```
 Agent

@@ -17,7 +17,7 @@
 - `screenshots/desktop--login.png`
 - `screenshots/mobile--login.png`
 
-**Commit:** `4071f1e`
+**Commit:** `d9c0b09`
 
 **RESULT: VERIFIED ✓**
 
