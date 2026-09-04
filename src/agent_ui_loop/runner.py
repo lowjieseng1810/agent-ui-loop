@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import uuid
 from pathlib import Path
 from typing import Any
@@ -109,9 +110,11 @@ def run_verification(
                         )
                     finally:
                         context.close()
-    except UserError:
-        raise
     except Exception as exc:
+        if not (run_dir / "report.json").exists():
+            shutil.rmtree(run_dir, ignore_errors=True)
+        if isinstance(exc, UserError):
+            raise
         raise UserError(
             what="verification run crashed",
             why=str(exc).split("\n")[0],

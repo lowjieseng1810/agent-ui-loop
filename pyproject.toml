@@ -44,10 +44,6 @@ gif = [
 [project.scripts]
 agent-ui-loop = "agent_ui_loop.cli:main"
 
-[project.urls]
-Homepage = "https://github.com"
-Documentation = "https://github.com"
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_ui_loop"]
 

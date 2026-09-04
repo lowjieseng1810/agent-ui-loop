@@ -16,10 +16,12 @@ An agent should not merely say “Done.”
 It should be able to prove: **“Done — and here is the evidence.”**
 
 ```bash
-pip install agent-ui-loop
+pip install .
 python -m playwright install chromium
 agent-ui-loop demo
 ```
+
+The distribution name is `agent-ui-loop`. From this repository, `pip install .` is the command that works today.
 
 No sample app to prepare. The demo ships a login page with a **real** mobile CTA overflow, catches it with Playwright, applies the CSS fix, re-checks, and prints `VERIFIED`.
 
@@ -53,7 +55,7 @@ This is **not** “AI makes prettier websites,” visual QA theater, screenshot 
 ## Install
 
 ```bash
-pip install agent-ui-loop
+pip install .
 python -m playwright install chromium
 ```
 
@@ -218,7 +220,8 @@ Browsers on GitHub-hosted runners need `python -m playwright install chromium --
 | Command | Purpose |
 | --- | --- |
 | `agent-ui-loop init` | Write `agent-ui-loop.yml` + Claude skill |
-| `agent-ui-loop run` | Verify (also `check`) |
+| `agent-ui-loop run` | Verify |
+| `agent-ui-loop check` | Alias of `run` |
 | `agent-ui-loop prove` | Print proof for the latest run |
 | `agent-ui-loop compare` | Before/after between last two runs |
 | `agent-ui-loop demo` | Killer demo with a real mobile overflow |

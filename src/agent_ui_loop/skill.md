@@ -50,7 +50,7 @@ complete.
 From the project that contains the UI:
 
 ```bash
-pip install agent-ui-loop
+pip install .
 python -m playwright install chromium
 agent-ui-loop init --url http://localhost:3000
 ```

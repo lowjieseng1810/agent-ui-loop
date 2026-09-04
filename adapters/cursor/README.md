@@ -4,7 +4,7 @@ Agent UI Loop is agent-agnostic. Cursor does not need a proprietary runner.
 
 ## Use
 
-1. `pip install agent-ui-loop && python -m playwright install chromium`
+1. `pip install . && python -m playwright install chromium`
 2. `agent-ui-loop init`
 3. After UI edits, run `agent-ui-loop run` from the terminal or ask Cursor to run it.
 4. Point the agent at `.agent-ui-loop/runs/<latest>/report.md` and the `--- agent-summary ---` JSON.

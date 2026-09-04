@@ -114,6 +114,10 @@ def test_server_unavailable(tmp_path: Path):
         _run("http://127.0.0.1:1", tmp_path, [{"type": "no-console-errors"}])
     assert exc.value.exit_code == 3
     assert "unavailable" in exc.value.what.lower() or "unavailable" in exc.value.why.lower()
+    runs = tmp_path / "out" / "runs"
+    if runs.exists():
+        incomplete = [p for p in runs.iterdir() if p.is_dir() and not (p / "report.json").exists()]
+        assert incomplete == []
 
 
 def test_report_and_proof_files(serve_dir, tmp_path: Path):
