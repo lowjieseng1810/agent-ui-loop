@@ -2,7 +2,7 @@
 
 **Your agent can code. Now make it prove the UI.**
 
-![Agent UI Loop: Agent says Done, Loop says Prove it, desktop passes, mobile overflow fails with scrollWidth evidence, sample-app CSS fix, then VERIFIED](assets/hero/agent-ui-loop-demo.gif)
+![Agent UI Loop: agent says Done, loop proves it in Chromium; desktop passes; mobile 390px viewport fails because the CTA is 203px too wide (scrollWidth 593); sample-app CSS fix only; VERIFIED](assets/hero/agent-ui-loop-demo.gif)
 
 AI coding agents are very good at saying “done.”
 Agent UI Loop makes that claim testable.
@@ -71,9 +71,9 @@ The product is the CLI protocol (`run` → evidence → `prove`). Adapters do no
 
 ## From “Done” to “Proved”
 
-![Static fallback: real mobile overflow, ACCEPTANCE FAILED, scrollWidth vs viewportWidth](assets/hero/agent-ui-loop-hero.png)
+![Static fallback: 390px mobile viewport chrome, CTA overflowing past the viewport edge, scrollWidth 593 vs viewportWidth 390](assets/hero/agent-ui-loop-hero.png)
 
-<p align="center"><sub>Same 16:9 composition as the GIF (FAIL beat). Real screenshot + real measurements.</sub></p>
+<p align="center"><sub>Same 16:9 FAIL beat as the GIF. Real Chromium capture; the CTA extends outside the 390px viewport on purpose.</sub></p>
 
 ```
 Agent
