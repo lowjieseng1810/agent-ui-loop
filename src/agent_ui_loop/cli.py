@@ -181,7 +181,7 @@ def demo(keep: bool, json_mode: bool, no_fix: bool) -> None:
             _fail(exc)
         if not json_mode:
             print_run(before, color=_color(), json_mode=False)
-            click.echo("That failure is real: the CTA row is min-width 520px on a 390px viewport.")
+            click.echo("That failure is real: the CTA is wider than the 390px mobile viewport.")
         if no_fix:
             if json_mode:
                 click.echo(json.dumps({"before": before}, indent=2))
@@ -189,7 +189,7 @@ def demo(keep: bool, json_mode: bool, no_fix: bool) -> None:
 
         if not json_mode:
             click.echo()
-            click.echo("Applying the CSS fix (min-width: 0; width: 100%) …")
+            click.echo("Applying the CSS fix (constrain the CTA to 100% width) …")
         write_demo_app(app_dir, broken=False)
         try:
             after = run_verification(config, cwd=cwd)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from pathlib import Path
@@ -65,7 +66,7 @@ def run_verification(
                         shot_name = f"{viewport.name}--{slug(route)}.png"
                         shot_path = shot_dir / shot_name
                         try:
-                            page.screenshot(path=str(shot_path), full_page=True)
+                            page.screenshot(path=str(shot_path), full_page=False)
                         except Exception as exc:
                             raise UserError(
                                 what=f"screenshot failed ({viewport.name} {route})",

@@ -76,6 +76,7 @@ input {
 .cta {
   flex: 1;
   width: 100%;
+  min-width: 0;
   background: var(--brand);
   color: #fff;
   border: 0;
@@ -83,6 +84,8 @@ input {
   padding: 14px 28px;
   font-size: 16px;
   font-weight: 650;
+  white-space: normal;
+  letter-spacing: 0;
 }
 
 .mark {

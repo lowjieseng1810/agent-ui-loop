@@ -87,13 +87,13 @@ def main() -> None:
     frames = [
         frame("Agent: “Login page is complete.”", subtitle="No evidence yet."),
         frame("Agent UI Loop · desktop 1440×900", desktop, "Chromium, real viewport"),
-        frame("Agent UI Loop · mobile 390×844", mobile_fail, "CTA row min-width 520px"),
+        frame("Agent UI Loop · mobile 390×844", mobile_fail, "CTA wider than the viewport"),
         frame(
             "Evidence: horizontal overflow",
             mobile_fail,
             f"scrollWidth={ev['scrollWidth']}  viewportWidth={ev['viewportWidth']}",
         ),
-        frame("Agent fixes CSS", subtitle=".cta-row { min-width: 0; width: 100%; }"),
+        frame("Agent fixes CSS", subtitle=".cta { width: 100%; min-width: 0; white-space: normal; }"),
         frame("Re-check · mobile", mobile_ok, "overflow gone"),
         frame("VERIFIED", mobile_ok, "Acceptance passed · proof written"),
     ]

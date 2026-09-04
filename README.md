@@ -4,6 +4,12 @@
 
 ![Agent UI Loop demo: mobile CTA overflow detected, fixed, then verified](docs/demo.gif)
 
+**Before (mobile 390×844):** the Continue CTA is clipped off the viewport.  
+![Mobile before: CTA overflow](docs/stills/mobile-before.png)
+
+**After:** the same acceptance checks pass.  
+![Mobile after: CTA fits](docs/stills/mobile-after.png)
+
 Agent UI Loop gives AI coding agents a real-browser verification loop for frontend interfaces: **verify requirements, collect evidence, fix failures, and prove the result.**
 
 An agent should not merely say “Done.”
@@ -99,7 +105,7 @@ Agent UI Loop opens real Chromium:
 ```
 /login  desktop 1440×900   ✓
 /login  mobile  390×844    ✗  no-horizontal-overflow
-        scrollWidth=520  viewportWidth=390
+        scrollWidth > viewportWidth  (CTA clipped)
 ```
 
 Evidence: mobile screenshot + measurements — not a vibe.

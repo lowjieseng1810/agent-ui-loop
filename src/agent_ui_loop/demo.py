@@ -58,6 +58,10 @@ class QuietHandler(SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args) -> None:  # noqa: A003
         return
 
+    def end_headers(self) -> None:
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def do_GET(self) -> None:  # noqa: N802
         path = self.path.split("?", 1)[0]
         if path in {"/", "/login", "/login/"}:
