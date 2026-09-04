@@ -18,3 +18,5 @@ That runs a **real** verification (broken then fixed sample app), then writes:
 `scripts/record_gif.py` is a leftover helper. Prefer `build_release_assets.py`.
 
 Hero GIF is 1280×720 (16:9): real UI on the left, verification state on the right. Frames come from a live Playwright run, not a mock.
+
+Mobile-fail frames capture a window wider than 390px so the full CTA string stays in the bitmap; a red 390px overlay marks the real viewport. The GIF canvas must not crop that overflow. Verified frames are a true 390×844 shot of the fixed CSS (CTA wraps inside the viewport).
