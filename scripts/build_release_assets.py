@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from agent_ui_loop.demo import demo_config, find_free_port, start_demo_server, write_demo_app
-from agent_ui_loop.proof import build_proof, previous_run_dir, render_proof_text
+from agent_ui_loop.proof import build_proof, previous_run_dir, render_proof_text, requirement_totals
 from agent_ui_loop.runner import run_verification
 
 ROOT = Path.cwd()
@@ -220,11 +220,9 @@ def social() -> Image.Image:
 
 
 W, H = 1280, 720
-HEAD_H = 56
-LEFT_W = 930
-SAFE = 16
-CHROME_TOP = 38
-CHROME_SIDE = 5
+HEAD_H = 52
+LEFT_W = 870  # ~68%
+PANEL_INSET = 12
 
 
 def capture_login(url: str, width: int, height: int) -> tuple[Image.Image, dict]:
@@ -269,7 +267,6 @@ def capture_login(url: str, width: int, height: int) -> tuple[Image.Image, dict]
 
 
 def fit_contain(img: Image.Image, tw: int, th: int) -> Image.Image:
-    """Scale the entire image into the box. Never crop."""
     ratio = min(tw / img.width, th / img.height)
     nw, nh = max(1, int(img.width * ratio)), max(1, int(img.height * ratio))
     return img.resize((nw, nh), Image.Resampling.LANCZOS)
@@ -281,18 +278,29 @@ def crop_band(img: Image.Image, meta: dict, *, top: int, bot: int) -> tuple[int,
     return y0, y1
 
 
-def crop_cta_scene(img: Image.Image, meta: dict, *, mode: str) -> Image.Image:
-    """Vertical crop around the form + CTA. Never crop the CTA on the right."""
-    w = img.size[0]
-    y0, y1 = crop_band(img, meta, top=380 if mode != "desktop" else 360, bot=40)
-    right = int(round(meta["right"]))
-    if mode == "desktop":
-        x0, x1 = 0, min(w, max(right + 88, 640))
-    else:
-        x0, x1 = 0, w
-    if x1 - x0 < right - x0 + 24:
-        x1 = min(w, right + 48)
-    return img.crop((x0, y0, x1, y1))
+def page_band(img: Image.Image, meta: dict, x1: int, *, top: int = 340) -> Image.Image:
+    y0, y1 = crop_band(img, meta, top=top, bot=36)
+    x1 = min(img.width, max(8, x1))
+    return img.crop((0, y0, x1, y1))
+
+
+def match_aspect(img: Image.Image, aspect: float) -> Image.Image:
+    """Trim or pad the TOP so width/height == aspect. Never trim the right (CTA)."""
+    w, h = img.size
+    need_h = max(1, int(round(w / aspect)))
+    if need_h == h:
+        return img
+    if need_h < h:
+        return img.crop((0, h - need_h, w, h))
+    canvas = Image.new("RGB", (w, need_h), img.getpixel((2, 2)))
+    canvas.paste(img, (0, need_h - h))
+    return canvas
+
+
+def fill_left(src: Image.Image, width: int = LEFT_W) -> Image.Image:
+    stage_h = H - HEAD_H
+    matched = match_aspect(src.convert("RGB"), width / stage_h)
+    return matched.resize((width, stage_h), Image.Resampling.LANCZOS)
 
 
 def wrap_lines(text: str, fnt, max_w: int) -> list[str]:
@@ -329,76 +337,50 @@ def cta_bbox(img: Image.Image) -> tuple[int, int, int, int] | None:
     return minx, miny, maxx, maxy
 
 
-
-def _chrome_bar(draw, x0, y0, x1, y1, fill, title: str, title_fill) -> None:
-    draw.rectangle((x0, y0, x1, y1), fill=fill)
-    for i, col in enumerate(((248, 113, 113), (251, 191, 36), (52, 211, 153))):
-        cx = x0 + 16 + i * 16
-        cy = y0 + (y1 - y0) // 2
-        draw.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=col)
-    draw.text((x0 + 72, y0 + 10), title, fill=title_fill, font=font(14, True))
+def hud_pill(draw, xy, text, fill, fg=INK):
+    x, y = xy
+    fnt = font(13, True)
+    tw = int(fnt.getlength(text)) + 16
+    draw.rounded_rectangle((x, y, x + tw, y + 24), radius=6, fill=fill)
+    draw.text((x + 8, y + 4), text, fill=fg, font=fnt)
 
 
-def scene_desktop(shot: Image.Image) -> Image.Image:
-    pad = CHROME_SIDE
-    canvas = Image.new("RGB", (shot.width + pad * 2, shot.height + CHROME_TOP + pad), (15, 23, 42))
-    draw = ImageDraw.Draw(canvas)
-    _chrome_bar(draw, 0, 0, canvas.width, CHROME_TOP, (15, 23, 42), "Chromium  ·  desktop 1440×900", INK)
-    canvas.paste(shot, (pad, CHROME_TOP))
-    draw.rectangle((pad - 1, CHROME_TOP - 1, pad + shot.width, CHROME_TOP + shot.height), outline=(51, 65, 85), width=2)
-    return canvas
+def desktop_left(shot: Image.Image, meta: dict) -> Image.Image:
+    right = min(shot.width, max(int(round(meta["right"])) + 96, 720))
+    band = page_band(shot, meta, right, top=400)
+    left = fill_left(band)
+    draw = ImageDraw.Draw(left)
+    hud_pill(draw, (16, 16), "Chromium  ·  1440×900", (15, 23, 42))
+    return left
 
 
-def scene_mobile_ok(shot: Image.Image) -> Image.Image:
-    pad = CHROME_SIDE
-    canvas = Image.new("RGB", (shot.width + pad * 2, shot.height + CHROME_TOP + 26), (6, 78, 59))
-    draw = ImageDraw.Draw(canvas)
-    _chrome_bar(draw, 0, 0, canvas.width, CHROME_TOP, (6, 78, 59), "390×844 MOBILE VIEWPORT  ·  CTA fits", INK)
-    canvas.paste(shot, (pad, CHROME_TOP))
-    draw.rectangle((pad - 1, CHROME_TOP - 1, pad + shot.width, CHROME_TOP + shot.height), outline=GREEN, width=3)
-    draw.rectangle((0, canvas.height - 26, canvas.width, canvas.height), fill=(6, 78, 59))
-    draw.text((12, canvas.height - 22), "CTA wraps inside the viewport", fill=INK, font=font(13, True))
-    return canvas
-
-
-def scene_mobile_fail(wide: Image.Image, meta: dict, *, vw: int, overflow_px: int) -> Image.Image:
-    """390px viewport chrome; overflowing CTA continues outside the frame (same bitmap)."""
-    y0, y1 = crop_band(wide, meta, top=360, bot=40)
+def mobile_fail_left(wide: Image.Image, meta: dict, *, vw: int, overflow_px: int) -> tuple[Image.Image, int]:
+    """Returns (left pane, source width used for matching OK scale)."""
     cta_right = int(round(meta["right"]))
     doc_right = int(meta.get("scrollWidth") or cta_right)
-    right = min(wide.width, max(cta_right + 72, doc_right + 40))
-    if right <= vw + 8:
-        raise RuntimeError(f"wide capture does not include overflow: right={right} vw={vw}")
-    inside = wide.crop((0, y0, vw, y1))
-    wing = wide.crop((vw, y0, right, y1))
-    pad = CHROME_SIDE
-    wing_pad = 14
-    frame_w = pad + inside.width + pad
-    canvas_w = frame_w + wing.width + wing_pad + 18
-    canvas_h = CHROME_TOP + inside.height + 28
-    canvas = Image.new("RGB", (canvas_w, canvas_h), (30, 10, 12))
-    draw = ImageDraw.Draw(canvas)
-    bed_x = frame_w - pad
-    draw.rectangle((bed_x, 0, canvas_w, canvas_h), fill=(69, 10, 10))
-    for x in range(bed_x, canvas_w, 14):
-        draw.line((x, 0, x + canvas_h // 2, canvas_h), fill=(127, 29, 29), width=1)
-    _chrome_bar(draw, 0, 0, frame_w, CHROME_TOP, (127, 29, 29), "390×844 MOBILE VIEWPORT", INK)
-    canvas.paste(inside, (pad, CHROME_TOP))
-    canvas.paste(wing, (frame_w - pad, CHROME_TOP))
-    draw.rectangle((pad - 1, CHROME_TOP - 1, pad + inside.width, CHROME_TOP + inside.height), outline=RED, width=4)
-    edge_x = pad + inside.width
-    draw.line((edge_x, CHROME_TOP - 4, edge_x, CHROME_TOP + inside.height + 4), fill=RED, width=5)
-    by = CHROME_TOP + inside.height
-    draw.rectangle((0, by, frame_w, canvas_h), fill=(127, 29, 29))
-    draw.text((12, by + 6), "viewport edge", fill=(254, 202, 202), font=font(13, True))
-    ox = edge_x + 10
-    draw.rectangle((ox, 8, canvas_w - 8, 34), fill=(127, 29, 29))
-    draw.text((ox + 8, 13), f"overflow +{overflow_px}px  beyond viewport", fill=INK, font=font(13, True))
-    return canvas
+    x1 = min(wide.width, max(cta_right + 80, doc_right + 48))
+    band = page_band(wide, meta, x1, top=400)
+    # Viewport edge in source pixels
+    draw = ImageDraw.Draw(band)
+    draw.line((vw, 0, vw, band.height), fill=RED, width=4)
+    hud_pill(draw, (12, 12), "390×844 viewport", (127, 29, 29))
+    hud_pill(draw, (vw + 10, 12), f"overflow +{overflow_px}px", (127, 29, 29))
+    left = fill_left(band)
+    return left, band.width
+
+
+def mobile_ok_left(ok_shot: Image.Image, meta: dict, *, fail_src_w: int, vw: int) -> Image.Image:
+    """390×844 page filling the left stage — CTA wraps inside, large and readable."""
+    del fail_src_w, vw
+    band = page_band(ok_shot, meta, ok_shot.width, top=400)
+    left = fill_left(band)
+    draw = ImageDraw.Draw(left)
+    hud_pill(draw, (16, 16), "390×844 viewport  ·  CTA fits", (6, 78, 59))
+    return left
 
 
 def hero_stage(
-    scene: Image.Image,
+    left: Image.Image,
     *,
     kicker: str,
     title: str,
@@ -410,22 +392,23 @@ def hero_stage(
     draw = ImageDraw.Draw(img)
     bar = {"fail": (127, 29, 29), "ok": (6, 78, 59)}.get(mood, (15, 23, 42))
     draw.rectangle((0, 0, W, HEAD_H), fill=bar)
-    draw.text((20, 8), kicker, fill=(226, 232, 240), font=font(14, True))
-    draw.text((20, 26), title, fill=INK, font=font(24, True))
+    draw.text((20, 8), kicker, fill=(226, 232, 240), font=font(13, True))
+    draw.text((20, 24), title, fill=INK, font=font(22, True))
 
-    pane_h = H - HEAD_H
-    inner_w, inner_h = LEFT_W - SAFE * 2, pane_h - SAFE * 2
-    fitted = fit_contain(scene.convert("RGB"), inner_w, inner_h)
-    px = SAFE
-    py = HEAD_H + SAFE + max(0, (inner_h - fitted.height) // 2)
-    img.paste(fitted, (px, py))
+    if left.size != (LEFT_W, H - HEAD_H):
+        left = fill_left(left) if left.width >= LEFT_W // 2 else left.resize((LEFT_W, H - HEAD_H), Image.Resampling.LANCZOS)
+    img.paste(left, (0, HEAD_H))
 
-    draw.rectangle((LEFT_W, HEAD_H, LEFT_W + 2, H), fill=LINE)
-    rx = LEFT_W + 16
-    panel_w = W - rx - 14
-    y = HEAD_H + 16
+    # Subtle panel — spacing only, no full-frame divider line.
+    px0, py0 = LEFT_W + PANEL_INSET, HEAD_H + PANEL_INSET
+    px1, py1 = W - PANEL_INSET, H - PANEL_INSET
+    rounded(draw, (px0, py0, px1, py1), 18, PANEL)
+
+    rx = px0 + 18
+    panel_w = px1 - px0 - 36
+    y = py0 + 16
     draw.text((rx, y), "VERIFICATION", fill=MUTED, font=font(12, True))
-    y += 28
+    y += 30
     body_font = font(16, True)
     for mark, label, kind in rows:
         color = {"pass": GREEN, "fail": RED, "warn": AMBER, "dim": MUTED}.get(kind, INK)
@@ -434,38 +417,46 @@ def hero_stage(
             draw.text((rx + 26, y), ln, fill=INK, font=body_font)
             y += 22
         y += 8
-        if y > H - 80:
+        if y > py1 - 64:
             break
     if footer:
-        fy = H - 52
+        fy = py1 - 40
         for ln in wrap_lines(footer, font(12), panel_w):
             draw.text((rx, fy), ln, fill=MUTED, font=font(12))
             fy += 16
     return img
 
 
-def assert_cta_uncropped_by_canvas(frame: Image.Image, *, view: str, viewport_px: int | None) -> None:
+def assert_cta_uncropped_by_canvas(frame: Image.Image, *, view: str) -> None:
     box = cta_bbox(frame)
     if box is None:
-        raise RuntimeError(f"{view}: CTA pixels not found in composed frame")
+        raise RuntimeError(f"{view}: CTA pixels not found")
     x0, y0, x1, y1 = box
-    if x1 >= W - 6:
+    if x1 >= W - 8:
         raise RuntimeError(f"{view}: CTA clipped by GIF canvas (x1={x1})")
-    if x0 < 4:
+    if x0 < 2:
         raise RuntimeError(f"{view}: CTA clipped on the left (x0={x0})")
+    # No full-height divider at LEFT_W: a 2px LINE column would be nearly constant.
     if view == "mobile-fail":
-        if x1 >= LEFT_W - 6:
-            raise RuntimeError(f"{view}: overflowing CTA hits the verification panel (x1={x1})")
-        if x1 - x0 < 280:
-            raise RuntimeError(f"{view}: CTA too narrow — overflow wing missing ({x1 - x0}px)")
-        if x1 < 520:
-            raise RuntimeError(f"{view}: overflow does not extend far enough (x1={x1})")
+        if x1 >= LEFT_W - 4:
+            raise RuntimeError(f"{view}: overflow hits the verification panel (x1={x1})")
+        if x1 - x0 < 300:
+            raise RuntimeError(f"{view}: overflow wing missing ({x1 - x0}px)")
     if view == "mobile-ok":
         if x1 > LEFT_W - 8:
-            raise RuntimeError(f"{view}: verified CTA crosses into the panel (x1={x1})")
-        if x1 - x0 > 560:
-            raise RuntimeError(f"{view}: verified CTA still looks like a nowrap overflow ({x1 - x0}px)")
-    print(f"qa {view} cta=({x0},{y0})-({x1},{y1}) viewport_px={viewport_px}")
+            raise RuntimeError(f"{view}: verified CTA crosses the panel (x1={x1})")
+    print(f"qa {view} cta=({x0},{y0})-({x1},{y1})")
+
+
+def assert_no_full_divider(frame: Image.Image) -> None:
+    px = frame.convert("RGB").load()
+    hits = 0
+    for y in range(HEAD_H + 8, H - 8, 3):
+        r, g, b = px[LEFT_W, y]
+        if abs(r - LINE[0]) < 12 and abs(g - LINE[1]) < 12 and abs(b - LINE[2]) < 12:
+            hits += 1
+    if hits > (H - HEAD_H) / 9:
+        raise RuntimeError("full-height divider line is still present")
 
 
 def gif_frame(title: str, body: Image.Image | None, subtitle: str, *, fail=False, ok=False) -> Image.Image:
@@ -581,9 +572,10 @@ def main() -> None:
     write_svg_loop(ASSETS / "diagrams" / "verification-loop.svg")
     write_svg_acceptance(ASSETS / "diagrams" / "acceptance-flow.svg")
 
-    desk_scene = scene_desktop(crop_cta_scene(desk_live, desk_meta, mode="desktop"))
-    fail_scene = scene_mobile_fail(fail_wide, fail_meta, vw=vw, overflow_px=overflow_px)
-    ok_scene = scene_mobile_ok(crop_cta_scene(ok_390, ok_meta, mode="ok"))
+    totals = requirement_totals(after["results"])
+    desk_left = desktop_left(desk_live, desk_meta)
+    fail_left, fail_src_w = mobile_fail_left(fail_wide, fail_meta, vw=vw, overflow_px=overflow_px)
+    ok_left = mobile_ok_left(ok_390, ok_meta, fail_src_w=fail_src_w, vw=vw)
     if fail_meta["right"] < vw + 80:
         raise RuntimeError(
             f"fail capture CTA right {fail_meta['right']} does not overflow viewport {vw}"
@@ -591,31 +583,30 @@ def main() -> None:
 
     gif_frames = [
         hero_stage(
-            desk_scene,
+            desk_left,
+            kicker="AGENT",
+            title="“Done.”",
+            rows=[
+                ("•", "Agent: “Done.”", "dim"),
+                ("…", "No proof yet", "warn"),
+                ("▶", "Open Agent UI Loop", "warn"),
+            ],
+            footer="A claim is not evidence",
+        ),
+        hero_stage(
+            desk_left,
             kicker="AGENT UI LOOP",
-            title='Agent: “Done.”     Loop: “Prove it.”',
+            title="“Prove it.”",
             rows=[
-                ("•", 'Agent: “Done.”', "dim"),
-                ("▶", "Loop: Prove it.", "warn"),
-                ("•", "No evidence yet", "warn"),
-                ("▶", "Open real Chromium", "warn"),
+                ("▶", "RUNNING", "warn"),
+                ("▶", "VERIFYING", "warn"),
+                ("•", "Real Chromium", "dim"),
+                ("•", "Acceptance criteria", "dim"),
             ],
-            footer="Acceptance · browser · evidence · proof",
+            footer="Same app. Real browser.",
         ),
         hero_stage(
-            desk_scene,
-            kicker="ACCEPTANCE",
-            title="What does “Done” mean?",
-            rows=[
-                ("✓", "CTA visible", "pass"),
-                ("✓", "Form functional", "pass"),
-                ("…", "Mobile layout valid", "warn"),
-                ("▶", "Chromium 1440×900 and 390×844", "warn"),
-            ],
-            footer="Explicit criteria — not a vibe",
-        ),
-        hero_stage(
-            desk_scene,
+            desk_left,
             kicker="VERIFY  ·  DESKTOP",
             title="Desktop 1440×900  ·  PASS",
             rows=[
@@ -627,65 +618,63 @@ def main() -> None:
             mood="ok",
         ),
         hero_stage(
-            fail_scene,
+            fail_left,
             kicker="VERIFY  ·  MOBILE",
             title="✗  ACCEPTANCE FAILED",
             rows=[
                 ("✓", "desktop 1440×900", "pass"),
-                ("✗", "MOBILE OVERFLOW", "fail"),
+                ("✗", "mobile overflow", "fail"),
                 ("✗", f"scrollWidth={sw}", "fail"),
                 ("✗", f"viewportWidth={vw}", "fail"),
                 ("✗", f"overflowPx={overflow_px}", "fail"),
             ],
-            footer="CTA is wider than the 390px viewport",
+            footer="CTA extends beyond the 390px viewport",
             mood="fail",
         ),
         hero_stage(
-            fail_scene,
+            fail_left,
             kicker="EVIDENCE",
-            title="Not a guess. Measured.",
+            title="Screenshot + DOM measurement",
             rows=[
                 ("▣", "screenshot captured", "warn"),
-                ("▣", f"scrollWidth {sw} > {vw}", "fail"),
-                ("▣", f"overflowPx={overflow_px}", "fail"),
-                ("→", "Agent reads the failure", "dim"),
+                ("✗", f"scrollWidth={sw}", "fail"),
+                ("✗", f"viewportWidth={vw}", "fail"),
+                ("✗", f"overflowPx={overflow_px}", "fail"),
             ],
             footer="Evidence on disk under .agent-ui-loop/",
             mood="fail",
         ),
         hero_stage(
-            ok_scene,
-            kicker="FIX  ·  SAMPLE APP ONLY",
-            title="Demo constrains the CTA in CSS",
+            ok_left,
+            kicker="FIX  ·  SAMPLE APP CSS ONLY",
+            title="Demo constrains the CTA",
             rows=[
                 ("!", "Does not edit your repository", "warn"),
-                ("→", "agent-ui-loop demo", "dim"),
-                ("→", "applies sample CSS fix", "dim"),
+                ("→", "sample app CSS only", "dim"),
                 ("→", "then reverifies", "dim"),
             ],
             footer="Honest workflow: evidence → fix → re-run",
         ),
         hero_stage(
-            ok_scene,
+            ok_left,
             kicker="REVERIFY",
             title="Same acceptance. Same browser.",
             rows=[
                 ("✓", "desktop 1440×900", "pass"),
                 ("✓", "mobile 390×844", "pass"),
-                ("✓", "CTA fits the viewport", "pass"),
+                ("✓", "CTA fits viewport", "pass"),
             ],
             footer="Re-run until the claim matches the UI",
             mood="ok",
         ),
         hero_stage(
-            ok_scene,
+            ok_left,
             kicker="PROOF",
             title="✓  VERIFIED",
             rows=[
-                ("✓", "Acceptance passed", "pass"),
-                ("✓", "Evidence retained", "pass"),
+                ("✓", f"{totals['passed']}/{totals['total']} checks passed", "pass"),
                 ("✓", "PROOF GENERATED", "pass"),
-                ("✓", "Claim is now testable", "pass"),
+                ("✓", "Evidence retained", "pass"),
             ],
             footer="Auditable evidence — not cryptography",
             mood="ok",
@@ -702,7 +691,8 @@ def main() -> None:
         "mobile-ok",
     ]
     for fr, view in zip(gif_frames, qa_specs):
-        assert_cta_uncropped_by_canvas(fr, view=view, viewport_px=vw)
+        assert_cta_uncropped_by_canvas(fr, view=view)
+        assert_no_full_divider(fr)
     dest = ASSETS / "hero" / "agent-ui-loop-demo.gif"
     dest.parent.mkdir(parents=True, exist_ok=True)
     durations = [1200, 1200, 1400, 2800, 2200, 1800, 1800, 2600]

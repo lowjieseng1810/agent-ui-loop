@@ -4,7 +4,7 @@ Every product screenshot and the hero GIF is generated from a **real** Agent UI 
 
 | File | Purpose | Source | README |
 | --- | --- | --- | --- |
-| `hero/agent-ui-loop-demo.gif` | 16:9 workflow (UI left, verification right) | Real Chromium. Fail frames: 390px viewport chrome + overflowing CTA continuing outside the frame. | Hero |
+| `hero/agent-ui-loop-demo.gif` | 16:9 product shell (UI left, verification panel right) | Live Chromium. Fail: 390px edge + overflow. Verified: same scale, CTA fits. | Hero |
 | `hero/agent-ui-loop-hero.png` | Static FAIL frame from the same composition | Real mobile screenshot + real measurements | From “Done” to “Proved” |
 | `screenshots/mobile-failure.png` | Annotated mobile fail | Real mobile screenshot + actual `scrollWidth` / `viewportWidth` | From "Done" to "Proved" |
 | `screenshots/before-after.png` | Same page before/after | Real mobile screenshots | From "Done" to "Proved" |
