@@ -221,7 +221,28 @@ def social() -> Image.Image:
 
 W, H = 1280, 720
 HEAD_H = 72
-LEFT_W = 760
+LEFT_W = 860
+
+
+def capture_login(url: str, width: int, height: int) -> Image.Image:
+    """Real Chromium screenshot at an explicit viewport. Used only for GIF composition."""
+    from io import BytesIO
+
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        try:
+            page = browser.new_page(
+                viewport={"width": width, "height": height},
+                device_scale_factor=1,
+            )
+            page.goto(url.rstrip("/") + "/login", wait_until="networkidle", timeout=20000)
+            page.wait_for_timeout(200)
+            data = page.screenshot(type="png")
+        finally:
+            browser.close()
+    return Image.open(BytesIO(data)).convert("RGB")
 
 
 def fit_contain(img: Image.Image, tw: int, th: int) -> Image.Image:
@@ -285,6 +306,7 @@ def hero_stage(
     footer: str,
     mood: str = "neutral",
     view: str = "desktop",
+    viewport_px: int | None = None,
 ) -> Image.Image:
     img = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(img)
@@ -295,20 +317,25 @@ def hero_stage(
 
     pane = Image.new("RGB", (LEFT_W, H - HEAD_H), BG)
     pd = ImageDraw.Draw(pane)
-    inner_w, inner_h = LEFT_W - 48, H - HEAD_H - 56
+    inner_w, inner_h = LEFT_W - 40, H - HEAD_H - 48
     fitted = fit_contain(browser.convert("RGB"), inner_w, inner_h)
-    px = 24
-    py = 20 + max(0, (inner_h - fitted.height) // 2)
+    px = 20
+    py = 16 + max(0, (inner_h - fitted.height) // 2)
     pane.paste(fitted, (px, py))
-    if view.startswith("mobile"):
-        edge = RED if view == "mobile-fail" else GREEN
-        pd.rectangle((px, py, px + fitted.width, py + fitted.height), outline=edge, width=3)
-        tag = "390px viewport · CTA overflows this edge" if view == "mobile-fail" else "390px viewport · CTA fully inside"
+    if view == "mobile-fail" and viewport_px:
+        scale = fitted.width / browser.width
+        edge = px + int(viewport_px * scale)
+        pd.rectangle((px, py, edge, py + fitted.height), outline=RED, width=3)
+        pd.line((edge, py, edge, py + fitted.height), fill=RED, width=4)
+        pd.text((px + 8, py + 8), "390px viewport", fill=RED, font=font(14, True))
+        ox = min(edge + 8, px + fitted.width - 170)
+        pd.text((ox, py + 8), "overflow →", fill=RED, font=font(14, True))
+    elif view == "mobile-ok":
+        pd.rectangle((px, py, px + fitted.width, py + fitted.height), outline=GREEN, width=3)
+        tag = "390px viewport  ·  full CTA visible"
         tw = int(font(13, True).getlength(tag)) + 16
-        tx = px + fitted.width - tw
-        if tx < px:
-            tx = px
-        pd.rectangle((tx, py + fitted.height - 28, px + fitted.width, py + fitted.height), fill=edge)
+        tx = max(px, px + fitted.width - tw)
+        pd.rectangle((tx, py + fitted.height - 28, px + fitted.width, py + fitted.height), fill=(6, 78, 59))
         pd.text((tx + 8, py + fitted.height - 24), tag, fill=INK, font=font(13, True))
     img.paste(pane, (0, HEAD_H))
     draw.rectangle((LEFT_W, HEAD_H, LEFT_W + 2, H), fill=LINE)
@@ -395,7 +422,19 @@ def main() -> None:
     try:
         cfg = demo_config(url)
         before = run_verification(cfg, cwd=work)
+        overflow = next(
+            r
+            for r in before["results"]
+            if r["check"] == "no-horizontal-overflow" and r["status"] == "failed"
+        )
+        ev = overflow["evidence"]
+        sw, vw = int(ev["scrollWidth"]), int(ev["viewportWidth"])
+        overflow_px = int(ev.get("overflowPx") or (sw - vw))
+        wide = max(sw + 80, 680)
+        fail_wide = capture_login(url, wide, 844)
+        desk_live = capture_login(url, 1440, 900)
         write_demo_app(app, broken=False)
+        ok_390 = capture_login(url, 390, 844)
         after = run_verification(cfg, cwd=work)
     finally:
         server.shutdown()
@@ -405,15 +444,6 @@ def main() -> None:
     adir = Path(after["meta"]["runDir"])
     fail_shot = Image.open(next((bdir / "screenshots").glob("mobile*.png"))).convert("RGB")
     ok_shot = Image.open(next((adir / "screenshots").glob("mobile*.png"))).convert("RGB")
-    desk = Image.open(next((bdir / "screenshots").glob("desktop*.png"))).convert("RGB")
-    overflow = next(
-        r
-        for r in before["results"]
-        if r["check"] == "no-horizontal-overflow" and r["status"] == "failed"
-    )
-    ev = overflow["evidence"]
-    sw, vw = int(ev["scrollWidth"]), int(ev["viewportWidth"])
-    overflow_px = int(ev.get("overflowPx") or (sw - vw))
 
     proof_text = (adir / "proof.txt").read_text(encoding="utf-8")
     # Copy raw artifacts for docs
@@ -431,9 +461,9 @@ def main() -> None:
     write_svg_loop(ASSETS / "diagrams" / "verification-loop.svg")
     write_svg_acceptance(ASSETS / "diagrams" / "acceptance-flow.svg")
 
-    desk_ui = crop_desktop_ui(desk)
-    fail_ui = highlight_cta(crop_mobile_ui(fail_shot))
-    ok_ui = crop_mobile_ui(ok_shot)
+    desk_ui = crop_desktop_ui(desk_live)
+    fail_ui = crop_mobile_ui(fail_wide)
+    ok_ui = crop_mobile_ui(ok_390)
 
     gif_frames = [
         hero_stage(
@@ -486,9 +516,10 @@ def main() -> None:
                 ("✗", f"viewportWidth={vw}", "fail"),
                 ("✗", f"overflowPx={overflow_px}", "fail"),
             ],
-            footer="Clipped by the 390px page viewport — not the GIF crop",
+            footer="Red line = 390px viewport; full CTA in capture",
             mood="fail",
             view="mobile-fail",
+            viewport_px=vw,
         ),
         hero_stage(
             fail_ui,
@@ -503,6 +534,7 @@ def main() -> None:
             footer="Evidence on disk under .agent-ui-loop/",
             mood="fail",
             view="mobile-fail",
+            viewport_px=vw,
         ),
         hero_stage(
             ok_ui,
@@ -575,7 +607,7 @@ def main() -> None:
     stills.mkdir(parents=True, exist_ok=True)
     fail_shot.save(stills / "mobile-before.png")
     ok_shot.save(stills / "mobile-after.png")
-    desk.save(stills / "desktop.png")
+    desk_live.save(stills / "desktop.png")
 
     meta = {
         "scrollWidth": sw,
