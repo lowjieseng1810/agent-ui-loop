@@ -90,13 +90,13 @@ Agent UI Loop
 
 An agent can ship a login page that looks fine at 1440×900 and still overflow at 390×844. “Done” is a claim. Overflow `scrollWidth=593` vs `viewportWidth=390` is a measurement.
 
-![Mobile acceptance fails: CTA wider than the 390×844 viewport, scrollWidth=593](assets/screenshots/mobile-failure.png)
+![Mobile acceptance fails: CTA clipped by the 390×844 viewport; scrollWidth=593, overflowPx=203](assets/screenshots/mobile-failure.png)
 
-<p align="center"><sub>Mobile acceptance fails because the rendered CTA is wider than the viewport (<code>scrollWidth=593</code>, <code>viewportWidth=390</code>).</sub></p>
+<p align="center"><sub>The blue CTA is cut off by the <strong>390px mobile viewport</strong> (the bug). The red banner is wide enough to show the full measurements: <code>scrollWidth=593</code>, <code>viewportWidth=390</code>, <code>overflowPx=203</code>.</sub></p>
 
 ![Before failed mobile CTA vs after verified wrapped CTA](assets/screenshots/before-after.png)
 
-<p align="center"><sub>The same page after the demo’s CSS fix. Overflow is gone; the run is VERIFIED.</sub></p>
+<p align="center"><sub>Same 390×844 framing. Left: CTA clipped by the viewport. Right: after the sample-app CSS fix, the full CTA is visible and the run is VERIFIED.</sub></p>
 
 The demo **does** edit the sample app’s CSS. It does **not** edit your repository.
 

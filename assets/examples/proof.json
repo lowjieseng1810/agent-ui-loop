@@ -54,10 +54,10 @@
       }
     ]
   },
-  "commit": "d9c0b094014e7b7213b057b3d082805388c532bd",
-  "commitShort": "d9c0b09",
-  "runId": "20260904T050019Z-09d6bbf4",
-  "runDir": "/workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T050019Z-09d6bbf4",
+  "commit": "a22b080b0bb87644586c1c2af64cd1dac9c1a099",
+  "commitShort": "a22b080",
+  "runId": "20260904T051045Z-767d8cb2",
+  "runDir": "/workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T051045Z-767d8cb2",
   "url": "http://127.0.0.1:48741",
   "rows": [
     {
@@ -114,7 +114,7 @@
     "logs/console.log",
     "logs/network.log"
   ],
-  "reportJson": "/workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T050019Z-09d6bbf4/report.json",
+  "reportJson": "/workspace/.agent-ui-loop/asset-work/.agent-ui-loop/runs/20260904T051045Z-767d8cb2/report.json",
   "failures": [],
   "adversarial": {
     "mode": "invalidate-completion-claim",
@@ -122,7 +122,7 @@
     "invalidated": 0
   },
   "previous": {
-    "runId": "20260904T050018Z-678c30ed",
+    "runId": "20260904T051044Z-4496d492",
     "status": "failed",
     "comparison": [
       {

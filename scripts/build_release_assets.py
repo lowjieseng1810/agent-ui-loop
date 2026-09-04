@@ -60,67 +60,91 @@ def save(img: Image.Image, path: Path) -> None:
     print("wrote", path)
 
 
-def annotate_fail(shot: Image.Image, scroll: int, vw: int) -> Image.Image:
+def annotate_fail(shot: Image.Image, scroll: int, vw: int, overflow: int) -> Image.Image:
+    """Keep the 390px viewport intact (intentional CTA clip) and put measurements on a wider canvas."""
     img = shot.convert("RGB")
-    # Crop to CTA area (lower-middle of 390x844)
-    top = min(420, img.height - 280)
-    crop = img.crop((0, top, img.width, min(img.height, top + 280)))
-    canvas = Image.new("RGB", (crop.width, crop.height + 72), BG)
-    canvas.paste(crop, (0, 72))
+    top = min(360, img.height - 360)
+    crop = img.crop((0, top, img.width, min(img.height, top + 360)))
+    banner_h = 100
+    gutter = 220
+    pad = 16
+    canvas = Image.new("RGB", (pad + crop.width + gutter + pad, banner_h + pad + crop.height + pad), BG)
     draw = ImageDraw.Draw(canvas)
-    draw.rectangle((0, 0, canvas.width, 72), fill=(127, 29, 29))
-    draw.text((16, 12), "✗  ACCEPTANCE FAILED", fill=INK, font=font(18, True))
+    draw.rectangle((0, 0, canvas.width, banner_h), fill=(127, 29, 29))
+    draw.text((20, 14), "✗  ACCEPTANCE FAILED", fill=INK, font=font(22, True))
+    draw.text((20, 48), "Mobile viewport 390×844  ·  CTA exceeds the viewport (detected overflow)", fill=(254, 202, 202), font=font(14))
     draw.text(
-        (16, 40),
-        f"Mobile 390×844  ·  overflow  scrollWidth={scroll}  viewportWidth={vw}",
-        fill=(254, 202, 202),
-        font=font(12),
+        (20, 72),
+        f"scrollWidth={scroll}   viewportWidth={vw}   overflowPx={overflow}",
+        fill=INK,
+        font=mono(15),
     )
+    ox, oy = pad, banner_h + pad
+    canvas.paste(crop, (ox, oy))
+    draw.rectangle((ox, oy, ox + crop.width, oy + crop.height), outline=RED, width=3)
+    draw.line((ox + crop.width, oy, ox + crop.width, oy + crop.height), fill=RED, width=4)
+    gx = ox + crop.width + 16
+    draw.text((gx, oy + 40), "390px", fill=RED, font=font(20, True))
+    draw.text((gx, oy + 70), "viewport", fill=INK, font=font(16, True))
+    draw.text((gx, oy + 96), "edge", fill=INK, font=font(16, True))
+    draw.text((gx, oy + 150), f"+{overflow}px", fill=RED, font=font(22, True))
+    draw.text((gx, oy + 182), "beyond", fill=MUTED, font=font(14))
+    draw.text((gx, oy + 204), "viewport", fill=MUTED, font=font(14))
+    draw.text((gx, oy + 250), "Bug in the page,", fill=MUTED, font=font(13))
+    draw.text((gx, oy + 270), "not a cropped shot.", fill=MUTED, font=font(13))
     return canvas
 
 
 def before_after(before: Image.Image, after: Image.Image) -> Image.Image:
-    def card(img, title, ok: bool):
-        # Crop CTA band
-        top = min(400, img.height - 360)
-        crop = img.crop((0, top, img.width, min(img.height, top + 360))).resize((360, 332), Image.Resampling.LANCZOS)
-        c = Image.new("RGB", (360, 380), PANEL)
-        c.paste(crop, (0, 48))
+    def card(src: Image.Image, title: str, ok: bool, caption: str) -> Image.Image:
+        top = min(360, src.height - 380)
+        crop = src.crop((0, top, src.width, min(src.height, top + 380)))
+        header = 52
+        footer = 36
+        c = Image.new("RGB", (crop.width, header + crop.height + footer), PANEL)
+        c.paste(crop, (0, header))
         d = ImageDraw.Draw(c)
-        color = GREEN if ok else RED
-        d.rectangle((0, 0, 360, 48), fill=(20, 83, 45) if ok else (127, 29, 29))
-        d.text((12, 14), title, fill=color, font=font(16, True))
+        d.rectangle((0, 0, c.width, header), fill=(20, 83, 45) if ok else (127, 29, 29))
+        d.text((12, 14), title, fill=GREEN if ok else RED, font=font(16, True))
+        d.rectangle((0, header + crop.height, c.width, c.height), fill=(15, 23, 42))
+        d.text((12, header + crop.height + 8), caption, fill=MUTED, font=font(13))
         return c
 
-    left = card(before, "BEFORE  ·  ✗ FAILED", False)
-    right = card(after, "AFTER  ·  ✓ VERIFIED", True)
-    canvas = Image.new("RGB", (760, 420), BG)
-    canvas.paste(left, (16, 20))
-    canvas.paste(right, (384, 20))
+    left = card(before, "BEFORE  ·  ✗ FAILED", False, "390×844 viewport  ·  CTA clipped by the page")
+    right = card(after, "AFTER  ·  ✓ VERIFIED", True, "390×844 viewport  ·  CTA fully visible")
+    gap = 20
+    canvas = Image.new("RGB", (left.width + right.width + gap + 32, left.height + 32), BG)
+    canvas.paste(left, (16, 16))
+    canvas.paste(right, (16 + left.width + gap, 16))
     return canvas
 
 
 def proof_image(text: str) -> Image.Image:
     lines = [ln.rstrip() for ln in text.strip().splitlines()]
-    canvas = Image.new("RGB", (920, 560), BG)
+    keep: list[str] = []
+    for ln in lines:
+        if ln.startswith("AGENT ") or ln.startswith("─"):
+            continue
+        if ln.strip().startswith("/") or "asset-work" in ln or ln.strip().startswith("logs/"):
+            continue
+        keep.append(ln)
+    result_ln = next((ln for ln in keep if ln.startswith("RESULT:")), None)
+    body = [ln for ln in keep if not ln.startswith("RESULT:")]
+    canvas = Image.new("RGB", (920, 640), BG)
     draw = ImageDraw.Draw(canvas)
-    rounded(draw, (24, 24, 896, 536), 16, PANEL)
-    y = 44
-    draw.text((48, y), "AGENT COMPLETION PROOF", fill=INK, font=font(22, True))
-    y = 88
-    body = lines[:18]
-    tail = [ln for ln in lines if ln.startswith("RESULT:") or ln.startswith("Proof means")]
-    shown = body + ([""] if tail else []) + tail
-    for ln in shown:
+    rounded(draw, (20, 20, 900, 620), 16, PANEL)
+    y = 40
+    draw.text((44, y), "AGENT COMPLETION PROOF", fill=INK, font=font(22, True))
+    y = 84
+    for ln in body:
         color = INK
-        if "VERIFIED" in ln:
-            color = GREEN
-        elif "NOT VERIFIED" in ln or (ln.startswith("Failed:") and not ln.endswith("0")):
-            color = RED
-        draw.text((48, y), ln[:90], fill=color, font=mono(13))
-        y += 20
-        if y > 500:
+        draw.text((44, y), ln[:82], fill=color, font=mono(14))
+        y += 22
+        if y > 540:
             break
+    if result_ln:
+        draw.rectangle((36, 560, 884, 604), fill=(6, 78, 59))
+        draw.text((48, 570), result_ln, fill=GREEN, font=font(20, True))
     return canvas
 
 
@@ -260,6 +284,10 @@ def hero_stage(
 
     left = fit_cover(browser.convert("RGB"), LEFT_W, H - HEAD_H, bias_left=True)
     img.paste(left, (0, HEAD_H))
+    if mood == "fail":
+        draw.line((LEFT_W - 3, HEAD_H, LEFT_W - 3, H), fill=RED, width=4)
+        draw.rectangle((LEFT_W - 248, H - 44, LEFT_W - 12, H - 12), fill=(127, 29, 29))
+        draw.text((LEFT_W - 236, H - 38), "390px viewport edge", fill=INK, font=font(14, True))
     draw.rectangle((LEFT_W, HEAD_H, LEFT_W + 2, H), fill=LINE)
 
     rx = LEFT_W + 28
@@ -362,6 +390,7 @@ def main() -> None:
     )
     ev = overflow["evidence"]
     sw, vw = int(ev["scrollWidth"]), int(ev["viewportWidth"])
+    overflow_px = int(ev.get("overflowPx") or (sw - vw))
 
     proof_text = (adir / "proof.txt").read_text(encoding="utf-8")
     # Copy raw artifacts for docs
@@ -371,7 +400,7 @@ def main() -> None:
     shutil.copyfile(adir / "github.md", ROOT / "docs" / "sample-github-comment.md")
     shutil.copyfile(adir / "proof.json", raw / "proof.json")
 
-    fail = annotate_fail(fail_shot, sw, vw)
+    fail = annotate_fail(fail_shot, sw, vw, overflow_px)
     save(fail, ASSETS / "screenshots" / "mobile-failure.png")
     save(before_after(fail_shot, ok_shot), ASSETS / "screenshots" / "before-after.png")
     save(proof_image(proof_text), ASSETS / "screenshots" / "proof.png")
@@ -382,7 +411,6 @@ def main() -> None:
     desk_ui = crop_desktop_ui(desk)
     fail_ui = highlight_cta(crop_mobile_problem(fail_shot))
     ok_ui = crop_mobile_problem(ok_shot)
-    overflow_px = int(ev.get("overflowPx") or (sw - vw))
 
     gif_frames = [
         hero_stage(
@@ -488,7 +516,7 @@ def main() -> None:
     ]
     dest = ASSETS / "hero" / "agent-ui-loop-demo.gif"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    durations = [1800, 1600, 1600, 2600, 2000, 1800, 1600, 2400]
+    durations = [1100, 1100, 1100, 2800, 2000, 1800, 1600, 2500]
     quantized = []
     for fr in gif_frames:
         try:
@@ -521,6 +549,7 @@ def main() -> None:
     meta = {
         "scrollWidth": sw,
         "viewportWidth": vw,
+        "overflowPx": overflow_px,
         "beforeRun": str(bdir),
         "afterRun": str(adir),
     }
